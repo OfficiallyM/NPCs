@@ -1,0 +1,28 @@
+ManifestFileVersion: 0
+CRC: 3984182874
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 7577a57455a8a3f7af559ba43a0305a4
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: b0363f7088f9761414f730641bf9a24b
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Eyes/eyes_05.png
+- Assets/Outfits/outfit_02.png
+- Assets/Eyes/eyes_02.png
+- Assets/Outfits/outfit_03.png
+- Assets/Outfits/outfit_04.png
+- Assets/Eyes/eyes_01.png
+- Assets/flesh.png
+- Assets/Shoes/shoes_02.png
+- Assets/Eyes/eyes_04.png
+- Assets/Shoes/shoes_01.png
+- Assets/Eyes/eyes_03.png
+- Assets/Outfits/outfit_01.png
+Dependencies: []

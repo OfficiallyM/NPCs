@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 3995709132
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: traders
+      Dependencies: {}
