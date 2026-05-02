@@ -7,7 +7,6 @@ namespace Traders.Trading
 {
 	public static class ItemValue
 	{
-		public static bool IsInitialise => _registry != null;
 		private static Dictionary<GameObject, float> _registry;
 
 		public static void Initialise()
@@ -39,6 +38,7 @@ namespace Traders.Trading
 			if (obj == null)
 				return 0;
 
+			// TODO: Doesn't work for starter house items.
 			string name = obj.name.Replace("(Clone)", "").Trim();
 
 			float baseValue = 0f;
@@ -84,7 +84,7 @@ namespace Traders.Trading
 			var tank = item.GetComponent<tankscript>();
 			float tankValue = 0;
 			if (tank?.F?.maxC != null)
-				tankValue = TankValue(tank.F.maxC);
+				tankValue = TankCapacityValue(tank.F.maxC);
 
 			if (item.GetComponent<enginescript>() != null)
 				return BaseValues.Engine + tankValue;
@@ -121,7 +121,7 @@ namespace Traders.Trading
 			return BaseValues.Fallback;
 		}
 
-		private static float TankValue(float litres, float maxBonus = 1.5f)
+		private static float TankCapacityValue(float litres, float maxBonus = 1.5f)
 		{
 			if (litres <= 0f) return 0f;
 

@@ -22,6 +22,8 @@ namespace Traders
 		internal static Traders I;
 		internal static bool Debug = false;
 
+		private GameObject _debugSelected;
+
 		public Traders()
 		{
 			I = this;
@@ -53,6 +55,37 @@ namespace Traders
 		public override void OnLoad()
 		{
 			ItemValue.Initialise();
+		}
+
+		public override void Update()
+		{
+			if (Input.GetKeyDown(KeyCode.Comma))
+				_debugSelected = null;
+
+			if (Input.GetKeyDown(KeyCode.Period))
+			{
+				Physics.Raycast(mainscript.M.player.Cam.transform.position, mainscript.M.player.Cam.transform.forward, out var raycastHit, float.PositiveInfinity, mainscript.M.player.useLayer);
+				if (raycastHit.collider != null && raycastHit.collider.gameObject != null)
+				{
+					GameObject hitGameObject = raycastHit.collider.transform.gameObject;
+
+					// Recurse upwards to find a tosaveitemscript.
+					tosaveitemscript save = hitGameObject.GetComponentInParent<tosaveitemscript>();
+
+					// Can't find the tosaveitemscript, return early.
+					if (save == null) return;
+
+					_debugSelected = save.gameObject;
+					return;
+				}
+				_debugSelected = null;
+			}
+		}
+
+		public override void OnGUI()
+		{
+			if (_debugSelected != null)
+				GUI.Button(new Rect(0, 0, 600, 30), $"Selected: {_debugSelected.name} - Value: {ItemValue.GetValue(_debugSelected)}g");
 		}
 	}
 }

@@ -29,12 +29,12 @@ namespace Traders.Trading
 		public const float Usable = 0.3f;
 
 		// Fluids.
-		public const float Gas = 1.5f;
-		public const float Oil = 1.2f;
-		public const float Alcohol = 0.6f;
-		public const float Water = 1f;
-		public const float Blood = 2f;
-		public const float Diesel = 1.25f;
+		public const float Gas = 0.25f;
+		public const float Oil = 0.2f;
+		public const float Alcohol = 0.1f;
+		public const float Water = 0.175f;
+		public const float Blood = 0.35f;
+		public const float Diesel = 0.225f;
 
 		// Hardcoded values.
 		public static Dictionary<string, float> SetValues = new Dictionary<string, float>()
@@ -76,16 +76,16 @@ namespace Traders.Trading
 
 		public static float GetFluidValue(mainscript.fluidenum fluid)
 		{
-			return fluid switch
+			switch (fluid)
 			{
-				mainscript.fluidenum.gas => Gas,
-				mainscript.fluidenum.oil => Oil,
-				mainscript.fluidenum.alcohol => Alcohol,
-				mainscript.fluidenum.water => Water,
-				mainscript.fluidenum.blood => Blood,
-				mainscript.fluidenum.diesel => Diesel,
-				_ => 0,
-			};
+				case mainscript.fluidenum.gas:	   return Gas;
+				case mainscript.fluidenum.oil:	   return Oil;
+				case mainscript.fluidenum.alcohol: return Alcohol;
+				case mainscript.fluidenum.water:   return Water;
+				case mainscript.fluidenum.blood:   return Blood;
+				case mainscript.fluidenum.diesel:  return Diesel;
+				default:						   return 0;
+			}
 		}
 	}
 }
