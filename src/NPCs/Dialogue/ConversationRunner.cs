@@ -11,6 +11,8 @@ namespace NPCs.Dialogue
 	/// </summary>
 	public class ConversationRunner : MonoBehaviour
 	{
+		public string ConversationId;
+
 		private Conversation _conversation;
 		private ConversationNode _currentNode;
 		private Dictionary<string, string> _variables;
@@ -36,30 +38,25 @@ namespace NPCs.Dialogue
 		public event Action OnConversationEnded;
 
 		/// <summary>
-		/// Starts a conversation by ID, with optional variable substitutions.
+		/// Starts a conversation.
 		/// </summary>
-		/// <param name="conversationId">ID of the conversation to start.</param>
-		/// <param name="variables">Optional variables to substitute into node text.</param>
-		public void StartConversation(string conversationId, Dictionary<string, string> variables = null)
+		public void StartConversation()
 		{
 			if (ConversationUI.HasActiveConversation)
 			{
-				Logging.LogWarning($"Conversation '{conversationId}' blocked, player is already in a conversation.");
+				Logging.LogWarning($"Conversation '{ConversationId}' blocked, player is already in a conversation.");
 				return;
 			}
 
-			Conversation conversation = DialogueRegistry.Get(conversationId);
+			Conversation conversation = DialogueRegistry.Get(ConversationId);
 			if (conversation == null)
 			{
-				Logging.LogWarning($"Conversation not found: {conversationId}");
+				Logging.LogWarning($"Conversation not found: {ConversationId}");
 				return;
 			}
 
 			_conversation = conversation;
-			_variables = variables ?? new Dictionary<string, string>();
-
 			AdvanceTo(conversation.Entry);
-
 			ConversationUI.SetActiveRunner(this);
 		}
 
@@ -127,6 +124,16 @@ namespace NPCs.Dialogue
 			return text;
 		}
 
+		/// <summary>
+		/// Add a variable for use within the conversation text.
+		/// </summary>
+		/// <param name="key">Variable replacement key.</param>
+		/// <param name="value">Variable value to show in text.</param>
+		public void AddVariable(string key, string value)
+		{
+			_variables[key] = value;
+		}
+
 		private void AdvanceTo(string nodeId)
 		{
 			if (string.IsNullOrEmpty(nodeId))
@@ -148,6 +155,14 @@ namespace NPCs.Dialogue
 			node.RollText();
 			_currentNode = node;
 			OnNodeChanged?.Invoke(_currentNode);
+		}
+
+		private void Awake()
+		{
+			_variables = new Dictionary<string, string>()
+			{
+				{ "playerName", Environment.UserName }
+			};
 		}
 	}
 }

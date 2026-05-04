@@ -34,7 +34,6 @@ namespace NPCs
 		}
 
 		private GameObject _debugSelected;
-		private ConversationRunner _debugRunner;
 
 		public NPCs()
 		{
@@ -62,7 +61,10 @@ namespace NPCs
 				.AddComponent<SpeechRenderer>()
 				.Register();
 
-			Components.StripComponents(GetItem(0));
+			var trader = GetItem(0);
+			Components.StripComponents(trader);
+			trader.GetComponent<ConversationRunner>().ConversationId = "trader_test";
+
 			if (mainscript.M.player.GetComponent<ConversationUI>() == null)
 				mainscript.M.player.gameObject.AddComponent<ConversationUI>();
 		}
@@ -80,7 +82,6 @@ namespace NPCs
 			if (Input.GetKeyDown(KeyCode.Comma))
 			{
 				_debugSelected = null;
-				_debugRunner = null;
 			}
 
 			if (Input.GetKeyDown(KeyCode.Period))
@@ -97,18 +98,10 @@ namespace NPCs
 					if (save == null) return;
 
 					_debugSelected = save.gameObject;
-					_debugRunner = _debugSelected.GetComponent<ConversationRunner>();
 					return;
 				}
 				_debugSelected = null;
-				_debugRunner = null;
 			}
-
-			if (Input.GetKeyDown(KeyCode.Slash) && _debugRunner != null)
-				_debugRunner.StartConversation("trader_test", new Dictionary<string, string>()
-				{
-					{ "playerName", System.Environment.UserName }
-				});
 		}
 
 		public override void OnGUI()
@@ -116,34 +109,6 @@ namespace NPCs
 			if (_debugSelected == null) return;
 
 			GUI.Button(new Rect(0, 0, 600, 30), $"Selected: {_debugSelected.name} - Value: {ItemValue.GetValue(_debugSelected)}g");
-
-			if (_debugRunner == null) return;
-
-			if (!_debugRunner.IsActive)
-			{
-				GUI.Button(new Rect(0, 35, 600, 30), "No active conversation. Press / to start trader_test.");
-				return;
-			}
-
-			//ConversationNode node = _debugRunner.CurrentNode;
-			//GUI.Button(new Rect(0, 35, 600, 30), $"Node: {node.Id}");
-			//GUI.Button(new Rect(0, 70, 600, 60), _debugRunner.ResolveText(node.Text));
-
-			//bool hasOptions = node.Options != null && node.Options.Count > 0;
-
-			//if (hasOptions)
-			//{
-			//	for (int i = 0; i < node.Options.Count; i++)
-			//	{
-			//		if (GUI.Button(new Rect(0, 135 + (i * 35), 600, 30), $"[{i}] {node.Options[i].Text}"))
-			//			_debugRunner.SelectOption(i);
-			//	}
-			//}
-			//else
-			//{
-			//	if (GUI.Button(new Rect(0, 135, 600, 30), node.Next != null ? "Continue..." : "Close"))
-			//		_debugRunner.Advance();
-			//}
 		}
 	}
 }

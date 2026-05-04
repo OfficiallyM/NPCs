@@ -1,5 +1,6 @@
 ﻿using NPCs.Dialogue.Core;
 using NPCs.Utilities.UI;
+using System.Collections.Generic;
 using UnityEngine;
 using Animator = NPCs.Utilities.UI.Animator;
 
@@ -63,6 +64,26 @@ namespace NPCs.Dialogue
 		{
 			if (HasActiveConversation)
 				Time.timeScale = 1f;
+
+			fpscontroller player = mainscript.M.player;
+			if (HasActiveConversation)
+				return;
+
+			if (Physics.Raycast(mainscript.M.player.Cam.transform.position, mainscript.M.player.Cam.transform.forward, out var hitInfo, mainscript.M.player.FrayRange, (int)mainscript.M.player.useLayer))
+			{
+				var runner = hitInfo.transform.GetComponentInParent<ConversationRunner>();
+				if (runner != null)
+				{
+					player.E = "Speak to";
+					player.BcanE = true;
+
+					if (Input.GetKeyDown(KeyCode.E))
+					{
+						runner.StartConversation();
+						return;
+					}
+				}
+			}
 		}
 
 		private void OnGUI()
