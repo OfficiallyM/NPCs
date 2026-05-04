@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 3990742822
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: npcs
+      Dependencies: {}

@@ -1,0 +1,50 @@
+{
+	"id": "trader_test",
+	"entry": "root",
+	"nodes": {
+		"root": {
+			"text": [
+				"Well, look what the road dragged in. You buying or just wasting my time?",
+				"Hey {playerName}, back again? What do you need?",
+				"You look like you've had a rough drive. What are you after?"
+			],
+			"options": [
+				{
+					"text": "Show me what you've got.",
+					"action": "open_trade",
+					"next": null
+				},
+				{
+					"text": "What's your best price?",
+					"next": "haggle"
+				},
+				{
+					"text": "Just passing through.",
+					"next": "farewell"
+				}
+			]
+		},
+		"haggle": {
+			"text": [ "My prices are fair. You won't find better out here." ],
+			"next": "haggle_response"
+		},
+		"haggle_response": {
+			"text": [ "So. You buying or not?" ],
+			"options": [
+				{
+					"text": "Fine. Show me.",
+					"action": "open_trade",
+					"next": null
+				},
+				{
+					"text": "Never mind.",
+					"next": "farewell"
+				}
+			]
+		},
+		"farewell": {
+			"text": [ "Suit yourself. Road's long." ],
+			"next": null
+		}
+	}
+}
