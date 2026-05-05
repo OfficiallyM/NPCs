@@ -40,6 +40,7 @@ namespace NPCs.Trading
 		public static Dictionary<string, float> SetValues = new Dictionary<string, float>()
 		{
 			{ "gold", 1f },
+			{ "silver", 0.5f },
 			{ "Nyul", 0f },
 			{ "Munkas01", 0f },
 			{ "Trader", 0f },

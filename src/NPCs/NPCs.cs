@@ -1,4 +1,5 @@
-﻿using NPCs.Dialogue;
+﻿using NPCs.Common;
+using NPCs.Dialogue;
 using NPCs.Dialogue.Core;
 using NPCs.Trading;
 using NPCs.Utilities;
@@ -47,18 +48,28 @@ namespace NPCs
 		public override void DbLoad()
 		{
 			AssetBundle bundle = AssetBundle.LoadFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream($"{nameof(NPCs)}.npcs"));
-			Trader.Flesh = bundle.LoadAsset<Texture>("flesh.png");
+			NPC.Flesh = bundle.LoadAsset<Texture>("flesh.png");
 			var textures = bundle.LoadAllAssets<Texture>();
-			Trader.Eyes = textures.Where(t => t.name.StartsWith("eyes_")).ToArray();
-			Trader.Outfits = textures.Where(t => t.name.StartsWith("outfit_")).ToArray();
-			Trader.Shoes = textures.Where(t => t.name.StartsWith("shoes_")).ToArray();
+			NPC.Eyes = textures.Where(t => t.name.StartsWith("eyes_")).ToArray();
+			NPC.Outfits = textures.Where(t => t.name.StartsWith("outfit_")).ToArray();
+			NPC.Shoes = textures.Where(t => t.name.StartsWith("shoes_")).ToArray();
+			var silver = bundle.LoadAsset<GameObject>("silver");
 			bundle.Unload(false);
 
+			// NPC item IDs: 0 - 100.
 			RegisterItem(itemdatabase.d.gmunkas01, 0, "Trader")
-				.WithRigidbody(1)
+				.WithRigidbody(90, 5)
 				.AddComponent<Trader>()
 				.AddComponent<ConversationRunner>()
 				.AddComponent<SpeechRenderer>()
+				.Register();
+
+			// Other item IDs: 100+.
+			RegisterItem(silver, 100)
+				.WithRigidbody(15.5f)
+				.AsPickupable(new PickupableOptions() { Attachable = true, CanInventory = true })
+				.SpawnInBox(maxPerBox: 6)
+				.SpawnAt(6, itemdatabase.d.ggold)
 				.Register();
 
 			var trader = GetItem(0);

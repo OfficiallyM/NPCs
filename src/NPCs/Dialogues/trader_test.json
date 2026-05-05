@@ -10,7 +10,7 @@
 			],
 			"options": [
 				{
-					"text": "Show me what you've got.",
+					"text": "Show me what you've got. [Start a trade]",
 					"action": "open_trade",
 					"next": null
 				},
@@ -32,7 +32,7 @@
 			"text": [ "So. You buying or not?" ],
 			"options": [
 				{
-					"text": "Fine. Show me.",
+					"text": "Fine. Show me. [Start a trade]",
 					"action": "open_trade",
 					"next": null
 				},

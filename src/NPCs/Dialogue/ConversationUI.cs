@@ -74,7 +74,7 @@ namespace NPCs.Dialogue
 				var runner = hitInfo.transform.GetComponentInParent<ConversationRunner>();
 				if (runner != null)
 				{
-					player.E = "Speak to";
+					player.E = $"Speak to {runner.GetVariable("npcName") ?? "Stranger"}";
 					player.BcanE = true;
 
 					if (Input.GetKeyDown(KeyCode.E))
@@ -102,7 +102,7 @@ namespace NPCs.Dialogue
 			GUILayout.BeginArea(animatedRect, GUIContent.none, "box");
 			GUILayout.BeginHorizontal();
 			GUILayout.Space(5f);
-			GUILayout.Label("Trader", "LabelHeader", GUILayout.ExpandWidth(false));
+			GUILayout.Label(_activeRunner?.GetVariable("npcName") ?? "Stranger", "LabelHeader", GUILayout.ExpandWidth(false));
 			GUILayout.EndHorizontal();
 			GUILayout.Space(10f);
 			ConversationNode node = _activeRunner?.CurrentNode;
@@ -117,7 +117,7 @@ namespace NPCs.Dialogue
 					{
 						GUILayout.BeginHorizontal();
 						GUILayout.FlexibleSpace();
-						if (GUILayout.Button(node.Options[i].Text, GUILayout.MaxWidth(width - 40f), GUILayout.MaxHeight(35f)))
+						if (GUILayout.Button(_activeRunner.ResolveText(node.Options[i].Text), GUILayout.MaxWidth(width - 40f), GUILayout.MaxHeight(35f)))
 							_activeRunner.SelectOption(i);
 						GUILayout.FlexibleSpace();
 						GUILayout.EndHorizontal();

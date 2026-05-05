@@ -104,7 +104,6 @@ namespace NPCs.Dialogue
 		{
 			_currentNode = null;
 			_conversation = null;
-			_variables = null;
 			ConversationUI.ClearActiveRunner();
 			OnConversationEnded?.Invoke();
 		}
@@ -132,6 +131,16 @@ namespace NPCs.Dialogue
 		public void AddVariable(string key, string value)
 		{
 			_variables[key] = value;
+		}
+
+		/// <summary>
+		/// Get the value of a variable associated with the specified key.
+		/// </summary>
+		/// <param name="key">The key of the variable to retrieve. Cannot be null.</param>
+		/// <returns>The value associated with the specified key if it exists; otherwise, null.</returns>
+		public string GetVariable(string key)
+		{
+			return _variables.ContainsKey(key) ? _variables[key] : null;
 		}
 
 		private void AdvanceTo(string nodeId)

@@ -1,15 +1,31 @@
 ManifestFileVersion: 0
-CRC: 2168520497
+CRC: 790462195
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 68b9c2d441269b7a0e9274ee5c19771d
+    Hash: 5f351f044aae60b6696683e81f1519e4
   TypeTreeHash:
     serializedVersion: 2
-    Hash: b0363f7088f9761414f730641bf9a24b
+    Hash: 315399e84573776bbec4f2524817cc8b
 HashAppended: 0
 ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
 - Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 65
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
@@ -24,5 +40,6 @@ Assets:
 - Assets/Eyes/eyes_04.png
 - Assets/Shoes/shoes_01.png
 - Assets/Eyes/eyes_03.png
+- Assets/Items/Silver/silver.prefab
 - Assets/Outfits/outfit_01.png
 Dependencies: []
