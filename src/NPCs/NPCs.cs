@@ -61,6 +61,7 @@ namespace NPCs
 				.WithRigidbody(90, 5)
 				.AddComponent<Trader>()
 				.AddComponent<ConversationRunner>()
+				.AddComponent<TradeSession>()
 				.AddComponent<SpeechRenderer>()
 				.Register();
 
@@ -85,7 +86,11 @@ namespace NPCs
 			DialogueRegistry.Initialise();
 			ItemValue.Initialise();
 
-			DialogueRegistry.RegisterAction("open_trade", () => Logging.LogDebug("Action fired: open_trade"));
+			DialogueRegistry.RegisterAction("open_trade", runner => {
+				TradeSession session = runner.GetComponent<TradeSession>();
+				if (session == null) return;
+				session.Begin();
+			});
 		}
 
 		public override void Update()

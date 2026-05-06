@@ -12,10 +12,12 @@ namespace NPCs.Dialogue
 	public class ConversationRunner : MonoBehaviour
 	{
 		public string ConversationId;
+		public float ConversationRange = 5f;
 
 		private Conversation _conversation;
 		private ConversationNode _currentNode;
 		private Dictionary<string, string> _variables;
+		private Transform _playerTransform;
 
 		/// <summary>
 		/// Whether a conversation is currently active.
@@ -76,7 +78,7 @@ namespace NPCs.Dialogue
 			ConversationOption option = _currentNode.Options[optionIndex];
 
 			if (!string.IsNullOrEmpty(option.Action))
-				DialogueRegistry.TriggerAction(option.Action);
+				DialogueRegistry.TriggerAction(option.Action, this);
 
 			AdvanceTo(option.Next);
 		}
@@ -95,6 +97,40 @@ namespace NPCs.Dialogue
 			}
 
 			AdvanceTo(_currentNode.Next);
+		}
+
+		/// <summary>
+		/// Advance conversation to a specific tree node.
+		/// </summary>
+		/// <param name="nodeId">Conversation node to advance to.</param>
+		public void AdvanceTo(string nodeId)
+		{
+			if (_conversation == null || string.IsNullOrEmpty(nodeId))
+			{
+				EndConversation();
+				return;
+			}
+
+			// Support for special reserved keywords in nodeId.
+			if (nodeId == "@background")
+			{
+				ConversationUI.Hide();
+				return;
+			}
+
+			if (_conversation.Nodes == null || !_conversation.Nodes.TryGetValue(nodeId, out ConversationNode node))
+			{
+				Logging.LogWarning($"Node not found: '{nodeId}' in conversation '{_conversation.Id}'.");
+				EndConversation();
+				return;
+			}
+
+			if (node.Options != null && node.Options.Count > 0 && node.Next != null)
+				Logging.LogWarning($"Node '{node.Id}' has both options and a next node defined. Options will be used.");
+
+			node.RollText();
+			_currentNode = node;
+			OnNodeChanged?.Invoke(_currentNode);
 		}
 
 		/// <summary>
@@ -143,35 +179,22 @@ namespace NPCs.Dialogue
 			return _variables.ContainsKey(key) ? _variables[key] : null;
 		}
 
-		private void AdvanceTo(string nodeId)
-		{
-			if (string.IsNullOrEmpty(nodeId))
-			{
-				EndConversation();
-				return;
-			}
-
-			if (!_conversation.Nodes.TryGetValue(nodeId, out ConversationNode node))
-			{
-				Logging.LogWarning($"Node not found: '{nodeId}' in conversation '{_conversation.Id}'.");
-				EndConversation();
-				return;
-			}
-
-			if (node.Options != null && node.Options.Count > 0 && node.Next != null)
-				Logging.LogWarning($"Node '{node.Id}' has both options and a next node defined. Options will be used.");
-
-			node.RollText();
-			_currentNode = node;
-			OnNodeChanged?.Invoke(_currentNode);
-		}
-
 		private void Awake()
 		{
 			_variables = new Dictionary<string, string>()
 			{
 				{ "playerName", Environment.UserName }
 			};
+			_playerTransform = mainscript.M.player.transform;
+		}
+
+		private void Update()
+		{
+			if (!IsActive) return;
+
+			float distance = Vector3.Distance(transform.position, _playerTransform.position);
+			if (distance > ConversationRange)
+				EndConversation();
 		}
 	}
 }

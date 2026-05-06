@@ -4,7 +4,7 @@ namespace NPCs.Trading
 {
 	public static class BaseValues
 	{
-		public const float Fallback = 0.25f;
+		public const float Fallback = 0.5f;
 
 		// Vehicle/Parts.
 		public const float BigChassis = 10f;
@@ -15,18 +15,18 @@ namespace NPCs.Trading
 		public const float Engine = 3.5f;
 		public const float Radiator = 2.5f;
 		public const float Tank = 2f;
-		public const float Wheel = 1.25f;
-		public const float Tire = 1.25f;
-		public const float Meter = 0.2f;
+		public const float Wheel = 1.5f;
+		public const float Tire = 1.5f;
+		public const float Meter = 0.5f;
 		public const float Light = 0.5f;
 
 		// Other.
 		public const float Gun = 2f;
-		public const float Melee = 1.3f;
-		public const float Cleaning = 0.4f;
+		public const float Melee = 1.5f;
+		public const float Cleaning = 0.5f;
 		public const float Food = 0.5f;
-		public const float Wearable = 0.2f;
-		public const float Usable = 0.3f;
+		public const float Wearable = 0.5f;
+		public const float Usable = 0.5f;
 
 		// Fluids.
 		public const float Gas = 0.25f;

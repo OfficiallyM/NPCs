@@ -12,7 +12,7 @@
 				{
 					"text": "Show me what you've got. [Start a trade]",
 					"action": "open_trade",
-					"next": null
+					"next": "@background"
 				},
 				{
 					"text": "What's your best price?",
@@ -34,7 +34,7 @@
 				{
 					"text": "Fine. Show me. [Start a trade]",
 					"action": "open_trade",
-					"next": null
+					"next": "@background"
 				},
 				{
 					"text": "Never mind.",
@@ -45,6 +45,22 @@
 		"farewell": {
 			"text": [ "Suit yourself. Road's long." ],
 			"next": null
+		},
+		"trade_cancelled": {
+			"text": [ "Some other time, perhaps." ],
+			"next": null
+		},
+		"trade_accepted": {
+			"text": [ "Pleasure doing business with you." ],
+			"next": null
+		},
+		"trade_rejected": {
+			"text": [ "Do you take me for an idiot or something?" ],
+			"next": "@background"
+		},
+		"trade_empty": {
+			"text": [ "Well I ain't giving you anything for free." ],
+			"next": "@background"
 		}
 	}
 }

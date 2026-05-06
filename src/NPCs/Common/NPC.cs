@@ -11,6 +11,8 @@ namespace NPCs.Common
 		public static Texture[] Outfits;
 		public static Texture[] Shoes;
 
+		public string NPCName { get; private set; }
+
 		protected System.Random Rng { get; private set; }
 		protected ConversationRunner Runner { get; private set; }
 		protected tosaveitemscript Save { get; private set; }
@@ -20,7 +22,8 @@ namespace NPCs.Common
 			Save = GetComponent<tosaveitemscript>();
 			Rng = new System.Random(Save.idInSave);
 			Runner = GetComponent<ConversationRunner>();
-			Runner.AddVariable("npcName", GenerateName());
+			NPCName = GenerateName();
+			Runner.AddVariable("npcName", NPCName);
 			SetAppearance();
 			GetComponent<newAiScript>().enabled = false;
 		}

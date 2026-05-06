@@ -39,6 +39,7 @@ namespace NPCs.Trading
 				return 0;
 
 			// TODO: Doesn't work for starter house items.
+			// TODO: Add up value for any parts in a child part slot.
 			string name = obj.name.Replace("(Clone)", "").Trim();
 
 			float baseValue = 0f;

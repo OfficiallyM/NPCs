@@ -7,12 +7,12 @@ namespace NPCs.Dialogue
 	public static class DialogueRegistry
 	{
 		private static Dictionary<string, Conversation> _conversations;
-		private static Dictionary<string, Action> _actions;
+		private static Dictionary<string, Action<ConversationRunner>> _actions;
 
 		public static void Initialise()
 		{
 			_conversations = new Dictionary<string, Conversation>();
-			_actions = new Dictionary<string, Action>();
+			_actions = new Dictionary<string, Action<ConversationRunner>>();
 
 			DialogueLoader.Load();
 		}
@@ -33,7 +33,7 @@ namespace NPCs.Dialogue
 		/// </summary>
 		/// <param name="key">Action name.</param>
 		/// <param name="handler">Action to perform when called.</param>
-		public static void RegisterAction(string key, Action handler)
+		public static void RegisterAction(string key, Action<ConversationRunner> handler)
 		{
 			if (string.IsNullOrEmpty(key) || handler == null) return;
 			_actions[key] = handler;
@@ -54,11 +54,11 @@ namespace NPCs.Dialogue
 		/// Triggers the action registered under the given key, if any.
 		/// </summary>
 		/// <param name="key">Action key to trigger.</param>
-		public static void TriggerAction(string key)
+		public static void TriggerAction(string key, ConversationRunner runner)
 		{
 			if (string.IsNullOrEmpty(key)) return;
 			if (_actions.TryGetValue(key, out var handler))
-				handler.Invoke();
+				handler.Invoke(runner);
 		}
 	}
 }

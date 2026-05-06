@@ -1,6 +1,7 @@
 ﻿using NPCs.Dialogue.Core;
+using NPCs.Trading;
+using NPCs.Utilities;
 using NPCs.Utilities.UI;
-using System.Collections.Generic;
 using UnityEngine;
 using Animator = NPCs.Utilities.UI.Animator;
 
@@ -12,12 +13,14 @@ namespace NPCs.Dialogue
 	internal class ConversationUI : MonoBehaviour
 	{
 		private static ConversationRunner _activeRunner;
+		private static bool _uiEnabled;
 		private Vector2 _scroll;
 
 		/// <summary>
 		/// Whether a conversation is currently active.
 		/// </summary>
 		public static bool HasActiveConversation => _activeRunner != null;
+		public static bool HasBackgroundConversation => _activeRunner != null && !_uiEnabled;
 
 		/// <summary>
 		/// Sets the active conversation runner, driving the UI.
@@ -42,21 +45,37 @@ namespace NPCs.Dialogue
 			SetUIState(false);
 		}
 
+		public static void Show()
+		{
+			if (!HasActiveConversation) return;
+			SetUIState(true);
+		}
+
+		public static void Hide()
+		{
+			SetUIState(false);
+		}
+
 		private static void SetUIState(bool state)
 		{
 			mainscript.M.crsrLocked = !state;
 			mainscript.M.SetCursorVisible(state);
 			mainscript.M.menu.gameObject.SetActive(!state);
 
-			if (state)
-				Animator.Play("mainUI", Animator.AnimationState.SlideIn);
-			else
-				Animator.Play("mainUI", Animator.AnimationState.SlideOut);
+			if (_uiEnabled != state)
+			{
+				if (state)
+					Animator.Play("mainUI", Animator.AnimationState.SlideIn);
+				else
+					Animator.Play("mainUI", Animator.AnimationState.SlideOut);
+			}
+
+			_uiEnabled = state;
 		}
 
 		private void Update()
 		{
-			if (HasActiveConversation && Input.GetButtonDown("Cancel"))
+			if (HasActiveConversation && !HasBackgroundConversation && Input.GetButtonDown("Cancel"))
 				_activeRunner.EndConversation();
 		}
 
@@ -66,21 +85,40 @@ namespace NPCs.Dialogue
 				Time.timeScale = 1f;
 
 			fpscontroller player = mainscript.M.player;
-			if (HasActiveConversation)
+			if (HasActiveConversation && !HasBackgroundConversation)
 				return;
 
 			if (Physics.Raycast(mainscript.M.player.Cam.transform.position, mainscript.M.player.Cam.transform.forward, out var hitInfo, mainscript.M.player.FrayRange, (int)mainscript.M.player.useLayer))
 			{
-				var runner = hitInfo.transform.GetComponentInParent<ConversationRunner>();
-				if (runner != null)
+				if (!HasBackgroundConversation)
 				{
-					player.E = $"Speak to {runner.GetVariable("npcName") ?? "Stranger"}";
-					player.BcanE = true;
-
-					if (Input.GetKeyDown(KeyCode.E))
+					var runner = hitInfo.transform.GetComponentInParent<ConversationRunner>();
+					if (runner != null)
 					{
-						runner.StartConversation();
-						return;
+						player.E = $"Speak to {runner.GetVariable("npcName") ?? "Stranger"}";
+						player.BcanE = true;
+
+						if (Input.GetKeyDown(KeyCode.E))
+						{
+							runner.StartConversation();
+							return;
+						}
+					}
+				}
+				else
+				{
+					var tradeSession = hitInfo.transform.GetComponentInParent<TradeSession>();
+					if (tradeSession != null && tradeSession.IsActive)
+					{
+						player.E = "Cancel trade";
+						player.BcanE = true;
+
+						if (Input.GetKeyDown(KeyCode.E))
+						{
+							tradeSession.Cancel();
+
+							return;
+						}
 					}
 				}
 			}
@@ -97,7 +135,7 @@ namespace NPCs.Dialogue
 			float y = Screen.height - height - 20f;
 			Rect targetRect = new Rect(x, y, width, height);
 			Rect animatedRect = Animator.Slide("mainUI", targetRect, Animator.SlideDirection.Bottom);
-			if (!HasActiveConversation && Animator.IsIdle("mainUI")) return;
+			if ((!HasActiveConversation || HasBackgroundConversation) && Animator.IsIdle("mainUI")) return;
 
 			GUILayout.BeginArea(animatedRect, GUIContent.none, "box");
 			GUILayout.BeginHorizontal();
