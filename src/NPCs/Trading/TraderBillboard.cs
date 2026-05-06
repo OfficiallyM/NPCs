@@ -1,5 +1,6 @@
 ﻿using NPCs.Common;
 using NPCs.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -18,6 +19,7 @@ namespace NPCs.Trading
 		private WorldspaceInteractiveDisplay _display;
 		private TraderInventory _inventory;
 		private TraderPersonality _personality;
+		private Func<ItemData, float> _valueResolver;
 
 		private TextMeshProUGUI _totalLabel;
 		private List<TextMeshProUGUI> _itemValueLabels = new List<TextMeshProUGUI>();
@@ -37,10 +39,11 @@ namespace NPCs.Trading
 		/// </summary>
 		public event System.Action OnSelectionChanged;
 
-		public void Initialise(TraderInventory inventory, TraderPersonality personality)
+		public void Initialise(TraderInventory inventory, TraderPersonality personality, Func<ItemData, float> valueResolver)
 		{
 			_inventory = inventory;
 			_personality = personality;
+			_valueResolver = valueResolver;
 
 			_display = gameObject.AddComponent<WorldspaceInteractiveDisplay>();
 			_display.SetPosition(new Vector3(-1.25f, 0f, 0f));
@@ -98,7 +101,7 @@ namespace NPCs.Trading
 				_display.CreateLabel(data.DisplayName, new RectPercent(27.5f, yOffset, 70f, rowHeight));
 
 				// Item value.
-				var valueLabel = _display.CreateLabel($"{data.Value}g", new RectPercent(72.5f, yOffset, 25f, rowHeight));
+				var valueLabel = _display.CreateLabel($"{_valueResolver(data)}g", new RectPercent(72.5f, yOffset, 25f, rowHeight));
 				_itemValueLabels.Add(valueLabel);
 
 				// Select toggle.
@@ -124,6 +127,7 @@ namespace NPCs.Trading
 			var inventoryItem = _inventory.Items.ElementAt(index);
 			GameObject item = inventoryItem.Key;
 			ItemData data = inventoryItem.Value;
+			float value = _valueResolver(data);
 
 			var label = _toggleButtons[index].GetComponentInChildren<TextMeshProUGUI>();
 			if (label != null)
@@ -131,13 +135,13 @@ namespace NPCs.Trading
 
 			if (_selected[index])
 			{
-				SelectedItems[item] = data.Value;
-				_totalSelected += data.Value;
+				SelectedItems[item] = value;
+				_totalSelected += value;
 			}
 			else
 			{
 				SelectedItems.Remove(item);
-				_totalSelected -= data.Value;
+				_totalSelected -= value;
 			}
 
 			_totalSelected = Mathf.Max(0f, _totalSelected);

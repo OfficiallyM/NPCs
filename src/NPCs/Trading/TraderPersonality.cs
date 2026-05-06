@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using NPCs.Enums;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NPCs.Trading
@@ -9,11 +10,10 @@ namespace NPCs.Trading
 	public class TraderPersonality
 	{
 		/// <summary>
-		/// Per item type price fluctuation. Positive values mean the trader
-		/// values that item type more than base, negative means less.
-		/// Keyed by item name.
+		/// Per category price fluctuation. Positive values mean the trader values
+		/// that category more than base, negative means less.
 		/// </summary>
-		public Dictionary<string, float> ItemFluctuation { get; }
+		public Dictionary<ItemCategory, float> ItemFluctuation { get; }
 
 		/// <summary>
 		/// Biases all condition tier discounts in the same direction.
@@ -27,12 +27,6 @@ namespace NPCs.Trading
 		public float[] ConditionDiscounts { get; }
 
 		/// <summary>
-		/// The spread between this trader's buy and sell price.
-		/// Higher margin means worse deals for the player.
-		/// </summary>
-		public float TradeMargin { get; }
-
-		/// <summary>
 		/// The lowest percentage of fair value this trader will accept, 0-1.
 		/// </summary>
 		public float MinimumDealThreshold { get; }
@@ -41,9 +35,8 @@ namespace NPCs.Trading
 		{
 			ConditionSensitivity = (float)rng.NextDouble();
 			ConditionDiscounts = RollConditionDiscounts(rng, ConditionSensitivity);
-			TradeMargin = Mathf.Lerp(0.05f, 0.4f, (float)rng.NextDouble());
 			MinimumDealThreshold = Mathf.Lerp(0.6f, 1.0f, (float)rng.NextDouble());
-			ItemFluctuation = new Dictionary<string, float>();
+			ItemFluctuation = RollCategoryFluctuation(rng);
 		}
 
 		/// <summary>
@@ -76,6 +69,18 @@ namespace NPCs.Trading
 			}
 
 			return discounts;
+		}
+
+		private Dictionary<ItemCategory, float> RollCategoryFluctuation(System.Random rng)
+		{
+			var fluctuation = new Dictionary<ItemCategory, float>();
+			foreach (ItemCategory category in System.Enum.GetValues(typeof(ItemCategory)))
+			{
+				// Roll between -0.5 and +0.5.
+				float roll = Mathf.Lerp(-0.5f, 0.5f, (float)rng.NextDouble());
+				fluctuation[category] = roll;
+			}
+			return fluctuation;
 		}
 	}
 }

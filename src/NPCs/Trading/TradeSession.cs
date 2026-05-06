@@ -23,9 +23,6 @@ namespace NPCs.Trading
 		private float _playerOfferTotal = 0f;
 
 		// TODO:
-		// - = todo
-		// ~ = test implemented fix
-		// 
 		// - Add support for multiple of the same trader item. Needs to roll quantity in inventory and change to +/- buttons.
 		// - Add option for raw gold/silver from trader.
 		// - Check trader personality rolls / margin / deal threshold are working.
@@ -42,7 +39,7 @@ namespace NPCs.Trading
 
 			// Set up billboards.
 			_traderBillboard = gameObject.AddComponent<TraderBillboard>();
-			_traderBillboard.Initialise(_trader.Inventory, _trader.Personality);
+			_traderBillboard.Initialise(_trader.Inventory, _trader.Personality, GetPerceivedValue);
 			_traderBillboard.Hide();
 
 			// Set up player billboard.
@@ -100,6 +97,14 @@ namespace NPCs.Trading
 			_runner.ConversationRange = 5f;
 		}
 
+		public float GetPerceivedValue(ItemData data)
+		{
+			if (data == null) return 0f;
+
+			float fluctuation = _trader.Personality.ItemFluctuation.TryGetValue(data.Category, out float f) ? f : 0f;
+			return Mathf.Max(0.5f, Maths.RoundToNearestHalf(data.Value * (1f + fluctuation)));
+		}
+
 		private void OnPlayerOfferChanged(Dictionary<GameObject, ItemData> items)
 		{
 			_playerOffer = items;
@@ -131,12 +136,8 @@ namespace NPCs.Trading
 
 		private bool EvaluateProposal(float playerOffer, float traderOffer)
 		{
-			if (traderOffer <= 0f) return playerOffer >= 0f;
-
-			// Player must cover the trader's offer minus margin, above the minimum threshold.
-			float requiredValue = traderOffer * _trader.Personality.MinimumDealThreshold;
-			float effectiveOffer = playerOffer * (1f - _trader.Personality.TradeMargin);
-			return effectiveOffer >= requiredValue;
+			if (traderOffer <= 0f) return true;
+			return playerOffer >= traderOffer * _trader.Personality.MinimumDealThreshold;
 		}
 
 		private void ResolveAccepted()

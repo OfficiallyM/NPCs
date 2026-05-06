@@ -114,6 +114,10 @@ namespace NPCs
 					if (save == null) return;
 
 					_debugSelected = save.gameObject;
+
+					var trader = save.gameObject.GetComponent<Trader>();
+					if (trader != null)
+						Logging.LogDebug($"Trader personality:\nCondition sensitivity: {trader.Personality.ConditionSensitivity}\nMinimum deal threshold: {trader.Personality.MinimumDealThreshold}");
 					return;
 				}
 				_debugSelected = null;
