@@ -24,6 +24,23 @@ namespace NPCs.Trading
 			CreateVisual();
 		}
 
+		private void Start()
+		{
+			_excludedItems.Clear();
+			_currentItems.Clear();
+
+			if (!GetComponent<Trader>().NaturalSpawned)
+				return;
+
+			// Check for objects around the trader on spawn to
+			// prevent them being traded for free.
+			foreach (Collider col in GetItemsInZone(true))
+			{
+				if (col.gameObject != null)
+					_excludedItems.Add(col.gameObject);
+			}
+		}
+
 		private void CreateVisual()
 		{
 			_zoneVisual = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -44,20 +61,12 @@ namespace NPCs.Trading
 		}
 
 		/// <summary>
-		/// Opens the trade zone, recording items already present to exclude them.
+		/// Opens the trade zone.
 		/// </summary>
 		public void Open()
 		{
 			_isOpen = true;
-			_excludedItems.Clear();
 			_currentItems.Clear();
-
-			// Pre-check — exclude anything already in the zone before the trade opened.
-			foreach (Collider col in GetItemsInZone())
-			{
-				if (col.gameObject != null)
-					_excludedItems.Add(col.gameObject);
-			}
 		}
 
 		/// <summary>
@@ -66,7 +75,6 @@ namespace NPCs.Trading
 		public void Close()
 		{
 			_isOpen = false;
-			_excludedItems.Clear();
 			_currentItems.Clear();
 		}
 
@@ -115,10 +123,10 @@ namespace NPCs.Trading
 			OnItemsChanged?.Invoke(_currentItems);
 		}
 
-		private Collider[] GetItemsInZone()
+		private Collider[] GetItemsInZone(bool extendedZone = false)
 		{
 			Vector3 centre = _zoneVisual.transform.position;
-			Vector3 halfExtents = new Vector3(1.5f, 1.5f, 1.5f);
+			Vector3 halfExtents = extendedZone ? new Vector3(30f, 30f, 30f) : new Vector3(1.5f, 1.5f, 1.5f);
 			return Physics.OverlapBox(centre, halfExtents, _zoneVisual.transform.rotation);
 		}
 
