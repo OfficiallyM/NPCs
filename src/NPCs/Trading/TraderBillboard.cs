@@ -1,9 +1,11 @@
 ﻿using NPCs.Common;
 using NPCs.Utilities;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static itemdatabase;
 
 namespace NPCs.Trading
 {
@@ -86,16 +88,17 @@ namespace NPCs.Trading
 			for (int i = 0; i < _inventory.Items.Count; i++)
 			{
 				int index = i;
-				GameObject item = _inventory.Items[i];
-				float value = ItemValue.GetValue(item);
+				var inventoryItem = _inventory.Items.ElementAt(i);
+				GameObject item = inventoryItem.Key;
+				ItemData data = inventoryItem.Value;
 
 				_selected.Add(false);
 
 				// Item name.
-				_display.CreateLabel(item.name, new RectPercent(27.5f, yOffset, 70f, rowHeight));
+				_display.CreateLabel(data.DisplayName, new RectPercent(27.5f, yOffset, 70f, rowHeight));
 
 				// Item value.
-				var valueLabel = _display.CreateLabel($"{value}g", new RectPercent(72.5f, yOffset, 25f, rowHeight));
+				var valueLabel = _display.CreateLabel($"{data.Value}g", new RectPercent(72.5f, yOffset, 25f, rowHeight));
 				_itemValueLabels.Add(valueLabel);
 
 				// Select toggle.
@@ -118,8 +121,9 @@ namespace NPCs.Trading
 			if (index >= _inventory.Items.Count) return;
 
 			_selected[index] = !_selected[index];
-			GameObject item = _inventory.Items[index];
-			float value = ItemValue.GetValue(item);
+			var inventoryItem = _inventory.Items.ElementAt(index);
+			GameObject item = inventoryItem.Key;
+			ItemData data = inventoryItem.Value;
 
 			var label = _toggleButtons[index].GetComponentInChildren<TextMeshProUGUI>();
 			if (label != null)
@@ -127,13 +131,13 @@ namespace NPCs.Trading
 
 			if (_selected[index])
 			{
-				SelectedItems[item] = value;
-				_totalSelected += value;
+				SelectedItems[item] = data.Value;
+				_totalSelected += data.Value;
 			}
 			else
 			{
 				SelectedItems.Remove(item);
-				_totalSelected -= value;
+				_totalSelected -= data.Value;
 			}
 
 			_totalSelected = Mathf.Max(0f, _totalSelected);

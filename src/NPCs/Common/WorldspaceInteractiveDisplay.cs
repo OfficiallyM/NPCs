@@ -13,8 +13,6 @@ namespace NPCs.Common
 	internal class WorldspaceInteractiveDisplay : MonoBehaviour
 	{
 		private Canvas _canvas;
-		private RectTransform _canvasRect;
-		private Vector2 _canvasSize;
 		private Camera _cam;
 		private PointerEventData _eventData;
 		private List<RaycastResult> _raycastResults = new List<RaycastResult>();
@@ -44,12 +42,12 @@ namespace NPCs.Common
 			canvasObj.AddComponent<CanvasScaler>();
 			canvasObj.AddComponent<GraphicRaycaster>();
 
-			_canvasRect = _canvas.GetComponent<RectTransform>();
-			_canvasRect.sizeDelta = _size;
-			_canvasRect.localPosition = _position;
-			_canvasRect.localRotation = Quaternion.identity;
-			_canvasRect.localScale = Vector3.one * 0.0025f;
-			_canvasRect.anchorMin = _canvasRect.anchorMax = _canvasRect.pivot = new Vector2(0.5f, 0.5f);
+			var canvasRect = _canvas.GetComponent<RectTransform>();
+			canvasRect.sizeDelta = _size;
+			canvasRect.localPosition = _position;
+			canvasRect.localRotation = Quaternion.identity;
+			canvasRect.localScale = Vector3.one * 0.0025f;
+			canvasRect.anchorMin = canvasRect.anchorMax = canvasRect.pivot = new Vector2(0.5f, 0.5f);
 
 			GameObject bg = new GameObject("Background");
 			bg.transform.SetParent(canvasObj.transform, false);

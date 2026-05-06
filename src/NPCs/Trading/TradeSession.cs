@@ -19,7 +19,7 @@ namespace NPCs.Trading
 		private ConversationRunner _runner;
 
 		// Player's current offer — items in trade zone plus any pointer-offered vehicles.
-		private Dictionary<GameObject, float> _playerOffer = new Dictionary<GameObject, float>();
+		private Dictionary<GameObject, ItemData> _playerOffer = new Dictionary<GameObject, ItemData>();
 		private float _playerOfferTotal = 0f;
 
 		// TODO:
@@ -100,10 +100,10 @@ namespace NPCs.Trading
 			_runner.ConversationRange = 5f;
 		}
 
-		private void OnPlayerOfferChanged(Dictionary<GameObject, float> items)
+		private void OnPlayerOfferChanged(Dictionary<GameObject, ItemData> items)
 		{
 			_playerOffer = items;
-			_playerOfferTotal = items.Values.Sum();
+			_playerOfferTotal = items.Values.Sum(data => data.Value);
 			_playerBillboard.Build(_playerOffer, Maths.RoundToNearestHalf(_playerOfferTotal));
 		}
 

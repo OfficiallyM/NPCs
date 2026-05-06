@@ -46,7 +46,7 @@ namespace NPCs.Trading
 		/// </summary>
 		/// <param name="items">Items in the trade zone keyed by GameObject with their resolved value.</param>
 		/// <param name="total">Combined value of all offered items.</param>
-		public void Build(Dictionary<GameObject, float> items, float total)
+		public void Build(Dictionary<GameObject, ItemData> items, float total)
 		{
 			_display.Clear();
 
@@ -57,8 +57,8 @@ namespace NPCs.Trading
 			float rowHeight = 8f;
 			foreach (var entry in items)
 			{
-				_display.CreateLabel(entry.Key.name, new RectPercent(30f, yOffset, 75f, rowHeight));
-				_display.CreateLabel($"{entry.Value}g", new RectPercent(80f, yOffset, 25f, rowHeight));
+				_display.CreateLabel(entry.Value.DisplayName, new RectPercent(30f, yOffset, 75f, rowHeight));
+				_display.CreateLabel($"{entry.Value.Value}g", new RectPercent(80f, yOffset, 25f, rowHeight));
 				yOffset += rowHeight + 1f;
 			}
 

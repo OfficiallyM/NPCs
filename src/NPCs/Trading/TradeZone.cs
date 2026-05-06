@@ -11,13 +11,13 @@ namespace NPCs.Trading
 	{
 		private GameObject _zoneVisual;
 		private HashSet<GameObject> _excludedItems = new HashSet<GameObject>();
-		private Dictionary<GameObject, float> _currentItems = new Dictionary<GameObject, float>();
+		private Dictionary<GameObject, ItemData> _currentItems = new Dictionary<GameObject, ItemData>();
 		private bool _isOpen = false;
 
 		/// <summary>
 		/// Fired when the items in the trade zone change.
 		/// </summary>
-		public event System.Action<Dictionary<GameObject, float>> OnItemsChanged;
+		public event System.Action<Dictionary<GameObject, ItemData>> OnItemsChanged;
 
 		private void Awake()
 		{
@@ -44,12 +44,13 @@ namespace NPCs.Trading
 		private void CreateVisual()
 		{
 			_zoneVisual = GameObject.CreatePrimitive(PrimitiveType.Quad);
+			_zoneVisual.name = "Trade zone";
 			_zoneVisual.transform.SetParent(transform, false);
 			_zoneVisual.transform.localPosition = new Vector3(2.5f, -0.92f, 2.5f);
 			_zoneVisual.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 			_zoneVisual.transform.localScale = new Vector3(3f, 3f, 3f);
 
-			// Disable the collider so the quad doesn't interfere with item placement.
+			// Disable the collider so the quad doesn't interfere with item physics.
 			Destroy(_zoneVisual.GetComponent<Collider>());
 
 			var renderer = _zoneVisual.GetComponent<Renderer>();
@@ -98,7 +99,7 @@ namespace NPCs.Trading
 		{
 			if (!_isOpen) return;
 
-			var detected = new Dictionary<GameObject, float>();
+			var detected = new Dictionary<GameObject, ItemData>();
 			foreach (Collider col in GetItemsInZone())
 			{
 				GameObject obj = col.gameObject;
@@ -110,10 +111,10 @@ namespace NPCs.Trading
 				tosaveitemscript save = obj.GetComponentInParent<tosaveitemscript>();
 				if (save == null) continue;
 
-				float value = ItemValue.GetValue(save.gameObject);
-				if (value <= 0f) continue;
+				var data = ItemRegistry.GetData(save.gameObject);
+				if ((data?.Value ?? 0) <= 0f) continue;
 
-				detected[save.gameObject] = value;
+				detected[save.gameObject] = data;
 			}
 
 			// Only fire if the offer has actually changed.
@@ -130,7 +131,7 @@ namespace NPCs.Trading
 			return Physics.OverlapBox(centre, halfExtents, _zoneVisual.transform.rotation);
 		}
 
-		private bool OfferChanged(Dictionary<GameObject, float> detected)
+		private bool OfferChanged(Dictionary<GameObject, ItemData> detected)
 		{
 			if (detected.Count != _currentItems.Count) return true;
 

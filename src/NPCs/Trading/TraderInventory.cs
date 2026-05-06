@@ -1,5 +1,7 @@
 ﻿using NPCs.Common;
+using NPCs.Enums;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace NPCs.Trading
@@ -10,7 +12,7 @@ namespace NPCs.Trading
 	/// </summary>
 	internal class TraderInventory
 	{
-		private System.Random _rng;
+		private readonly System.Random _rng;
 
 		public TraderInventory(System.Random rng)
 		{
@@ -18,9 +20,10 @@ namespace NPCs.Trading
 		}
 
 		/// <summary>
-		/// The trader's current stock as live scene instances.
+		/// The trader's current stock..
 		/// </summary>
-		public List<GameObject> Items { get; private set; } = new List<GameObject>();
+		public Dictionary<GameObject, ItemData> Items { get; private set; } = new Dictionary<GameObject, ItemData>();
+		private static Dictionary<GameObject, ItemData> _pool = new Dictionary<GameObject, ItemData>();
 
 		/// <summary>
 		/// Generates stock for this trader.
@@ -30,27 +33,16 @@ namespace NPCs.Trading
 		{
 			Items.Clear();
 
-			var pool = BuildItemPool();
-			if (pool.Count == 0) return;
+			if (_pool.Count == 0)
+				BuildItemPool();
+
+			if (_pool.Count == 0) return;
 
 			for (int i = 0; i < count; i++)
 			{
-				Items.Add(pool[_rng.Next(pool.Count)]);
+				var entry = _pool.ElementAt(_rng.Next(_pool.Count));
+				Items.Add(entry.Key, entry.Value);
 			}
-		}
-
-		/// <summary>
-		/// Destroys all stock instances. Call on trader despawn.
-		/// </summary>
-		public void Destroy()
-		{
-			foreach (GameObject item in Items)
-			{
-				if (item != null)
-					Object.Destroy(item);
-			}
-
-			Items.Clear();
 		}
 
 		/// <summary>
@@ -62,23 +54,23 @@ namespace NPCs.Trading
 			Items.Remove(item);
 		}
 
-		private List<GameObject> BuildItemPool()
+		private void BuildItemPool()
 		{
 			// Exclude vehicles, NPCs, and zero-value items from the tradeable pool.
-			var pool = new List<GameObject>();
-
 			foreach (GameObject item in itemdatabase.d.items)
 			{
 				if (item == null) continue;
-				if (item.GetComponentInChildren<carscript>() != null) continue;
-				if (item.GetComponentInChildren<utanfutoscript>() != null) continue;
-				if (item.GetComponent<NPC>() != null) continue;
-				if (ItemValue.GetValue(item) <= 0f) continue;
+				var data = ItemRegistry.GetData(item);
+				if (data.Category == ItemCategory.BigChassis) continue;
+				if (data.Category == ItemCategory.SmallChassis) continue;
+				if (data.Category == ItemCategory.BikeChassis) continue;
+				if (data.Category == ItemCategory.Trailer) continue;
+				if (data.Category == ItemCategory.Excluded) continue;
+				if (data.Category == ItemCategory.Currency) continue;
+				if (data.Value <= 0f) continue;
 
-				pool.Add(item);
+				_pool.Add(item, data);
 			}
-
-			return pool;
 		}
 	}
 }

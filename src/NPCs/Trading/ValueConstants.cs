@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using NPCs.Enums;
+using System.Collections.Generic;
 
 namespace NPCs.Trading
 {
@@ -37,14 +38,14 @@ namespace NPCs.Trading
 		public const float Diesel = 0.225f;
 
 		// Hardcoded values.
-		public static Dictionary<string, float> SetValues = new Dictionary<string, float>()
+		public static Dictionary<string, (float, ItemCategory)> SetValues = new Dictionary<string, (float, ItemCategory)>()
 		{
-			{ "gold", 1f },
-			{ "silver", 0.5f },
-			{ "Nyul", 0f },
-			{ "Munkas01", 0f },
-			{ "Trader", 0f },
-			{ "Broom", 2.5f },
+			{ "gold", (1f, ItemCategory.Currency) },
+			{ "silver", (0.5f, ItemCategory.Currency) },
+			{ "Nyul", (0f, ItemCategory.Excluded) },
+			{ "Munkas01", (0f, ItemCategory.Excluded) },
+			{ "Trader", (0f, ItemCategory.Excluded) },
+			{ "Broom", (2.5f, ItemCategory.Usable) },
 		};
 
 		// Values to determine constants.
@@ -73,6 +74,16 @@ namespace NPCs.Trading
 				if (name.Contains(bike))
 					return BikeChassis;
 			return SmallChassis;
+		}
+
+		public static ItemCategory GetChassisCategory(string name)
+		{
+			name = name.ToLowerInvariant();
+			foreach (string big in _bigVehicles)
+				if (name.Contains(big)) return ItemCategory.BigChassis;
+			foreach (string bike in _bikes)
+				if (name.Contains(bike)) return ItemCategory.BikeChassis;
+			return ItemCategory.SmallChassis;
 		}
 
 		public static float GetFluidValue(mainscript.fluidenum fluid)

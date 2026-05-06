@@ -84,7 +84,7 @@ namespace NPCs
 		public override void OnLoad()
 		{
 			DialogueRegistry.Initialise();
-			ItemValue.Initialise();
+			ItemRegistry.Initialise();
 
 			DialogueRegistry.RegisterAction("open_trade", runner => {
 				TradeSession session = runner.GetComponent<TradeSession>();
@@ -124,7 +124,7 @@ namespace NPCs
 		{
 			if (_debugSelected == null) return;
 
-			GUI.Button(new Rect(0, 0, 600, 30), $"Selected: {_debugSelected.name} - Value: {ItemValue.GetValue(_debugSelected)}g");
+			GUI.Button(new Rect(0, 0, 600, 30), $"Selected: {_debugSelected.name} - Value: {ItemRegistry.GetValue(_debugSelected)}g");
 		}
 	}
 }
