@@ -1,4 +1,5 @@
 ﻿using NPCs.Dialogue;
+using NPCs.Enums;
 using NPCs.Utilities;
 using System.Collections.Generic;
 using System.Linq;
@@ -162,6 +163,9 @@ namespace NPCs.Trading
 			{
 				if (item != null)
 				{
+					var data = _playerOffer[item];
+					_trader.Inventory.Add(item, data);
+
 					foreach (tosaveitemscript save in item.GetComponentsInChildren<tosaveitemscript>())
 						save.removeFromMemory = true;
 					Destroy(item);
@@ -204,12 +208,40 @@ namespace NPCs.Trading
 		private bool EvaluateProposal(float playerOffer, float traderOffer)
 		{
 			if (traderOffer <= 0f) return true;
-			return playerOffer >= traderOffer * _trader.Personality.MinimumDealThreshold;
+			float effectiveOffer = IsAllCurrency() ? playerOffer * 1.2f : playerOffer;
+			return effectiveOffer >= traderOffer * _trader.Personality.MinimumDealThreshold;
+		}
+
+		private bool IsAllCurrency()
+		{
+			if (_playerOffer.Count == 0) return false;
+			return _playerOffer.Values.All(data => data.Category == ItemCategory.Currency);
 		}
 
 		private void ResolveAccepted()
 		{
 			IsActive = false;
+
+			float traderOfferTotal = _traderBillboard.SelectedItems.Values.Sum(e => e.TotalValue);
+			float overpayment = Maths.RoundToNearestHalf(_playerOfferTotal - traderOfferTotal);
+
+			if (overpayment >= 0.5f)
+			{
+				int goldChange = Mathf.FloorToInt(overpayment);
+				bool silverChange = (overpayment - goldChange) >= 0.5f;
+
+				for (int i = 0; i < goldChange; i++)
+				{
+					var spawned = GameObject.Instantiate(_goldObj);
+					spawned.transform.position = _spawnPos;
+				}
+
+				if (silverChange)
+				{
+					var spawned = GameObject.Instantiate(_silverObj);
+					spawned.transform.position = _spawnPos;
+				}
+			}
 
 			// Spawn the correct quantity of each selected trader item.
 			foreach (var entry in _traderBillboard.SelectedItems)
@@ -223,7 +255,7 @@ namespace NPCs.Trading
 					spawned.transform.position = _spawnPos;
 				}
 
-				_trader.Inventory.Remove(prefab);
+				_trader.Inventory.Remove(prefab, quantity);
 			}
 
 			// Remove player items from the world.
@@ -231,6 +263,8 @@ namespace NPCs.Trading
 			{
 				if (item != null)
 				{
+					var data = _playerOffer[item];
+					_trader.Inventory.Add(item, data);
 					foreach (tosaveitemscript save in item.GetComponentsInChildren<tosaveitemscript>())
 						save.removeFromMemory = true;
 					Destroy(item);

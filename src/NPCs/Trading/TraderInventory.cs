@@ -42,17 +42,66 @@ namespace NPCs.Trading
 			{
 				var entry = _pool.ElementAt(_rng.Next(_pool.Count));
 				int quantity = RollQuantity(entry.Value.Category);
-				Items.Add(entry.Key, (entry.Value, quantity));
+
+				if (Items.ContainsKey(entry.Key))
+				{
+					var existing = Items[entry.Key];
+					Items[entry.Key] = (existing.data, existing.quantity + quantity);
+				}
+				else
+				{
+					Items.Add(entry.Key, (entry.Value, quantity));
+				}
 			}
 		}
 
 		/// <summary>
-		/// Removes an item from stock after a successful trade.
+		/// Adds an item to the trader's stock, incrementing quantity if already present.
+		/// </summary>
+		/// <param name="item">Item prefab to add.</param>
+		/// <param name="data">Item data for the prefab.</param>
+		public void Add(GameObject item, ItemData data)
+		{
+			string name = item.name.Replace("(Clone)", "").Trim();
+
+			// Don't add currency to inventory.
+			if (data.Category == ItemCategory.Currency)
+				return;
+
+			// Find matching prefab by name and increment quantity if already in stock.
+			foreach (var key in Items.Keys.ToList())
+			{
+				if (key.name == name)
+				{
+					var existing = Items[key];
+					Items[key] = (existing.data, existing.quantity + 1);
+					return;
+				}
+			}
+
+			// New item type, add as a new entry with quantity 1.
+			GameObject prefab = _pool.Keys.FirstOrDefault(k => k.name == name);
+			if (prefab != null)
+				Items.Add(prefab, (data, 1));
+		}
+
+		/// <summary>
+		/// Decrements the quantity of an item in stock by the given amount.
+		/// Removes the entry entirely if quantity reaches zero.
 		/// </summary>
 		/// <param name="item">Item to remove.</param>
-		public void Remove(GameObject item)
+		/// <param name="quantity">Quantity to remove.</param>
+		public void Remove(GameObject item, int quantity = 1)
 		{
-			Items.Remove(item);
+			if (!Items.ContainsKey(item)) return;
+
+			var existing = Items[item];
+			int updated = existing.quantity - quantity;
+
+			if (updated <= 0)
+				Items.Remove(item);
+			else
+				Items[item] = (existing.data, updated);
 		}
 
 		private void BuildItemPool()
