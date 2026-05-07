@@ -70,6 +70,17 @@ namespace NPCs.Trading
 
 		private static void Register(GameObject item)
 		{
+			var rawName = item.name.ToLowerInvariant();
+			if (rawName.Contains("cell") || rawName.Contains("gib"))
+			{
+				_registry[item] = new ItemData()
+				{
+					Category = ItemCategory.Excluded,
+					Value = 0,
+					DisplayName = item.name,
+				};
+				return;
+			}
 			ItemData data = GetItemData(item);
 			data.Value = Maths.RoundToNearestHalf(data.Value);
 			_registry[item] = data;
