@@ -1,6 +1,8 @@
 ﻿using NPCs.Common;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace NPCs.Trading
 {
@@ -11,6 +13,7 @@ namespace NPCs.Trading
 	internal class PlayerBillboard : MonoBehaviour
 	{
 		private WorldspaceInteractiveDisplay _display;
+		private Button _proposeButton;
 
 		/// <summary>
 		/// Fired when the player proposes the trade.
@@ -63,12 +66,18 @@ namespace NPCs.Trading
 			}
 
 			_display.CreateLabel($"Total: {total}g", new RectPercent(50f, 80f, 90f, 8f));
-			_display.CreateButton(
+			_proposeButton = _display.CreateButton(
 				"Propose trade",
 				"Propose trade",
 				new RectPercent(50f, 91f, 80f, 8f),
 				() => OnProposed?.Invoke()
 			);
+		}
+
+		public void SetProposeLabel(string label)
+		{
+			if (_proposeButton != null)
+				_proposeButton.GetComponentInChildren<TextMeshProUGUI>().text = label;
 		}
 	}
 }

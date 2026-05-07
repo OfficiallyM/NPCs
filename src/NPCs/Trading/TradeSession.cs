@@ -2,6 +2,7 @@
 using NPCs.Utilities;
 using System.Collections.Generic;
 using System.Linq;
+using TLDLoader;
 using UnityEngine;
 
 namespace NPCs.Trading
@@ -22,6 +23,10 @@ namespace NPCs.Trading
 		private Dictionary<GameObject, ItemData> _playerOffer = new Dictionary<GameObject, ItemData>();
 		private float _playerOfferTotal = 0f;
 
+		private GameObject _goldObj;
+		private GameObject _silverObj;
+		private Vector3 _spawnPos;
+
 		// TODO:
 		// - Add support for multiple of the same trader item. Needs to roll quantity in inventory and change to +/- buttons.
 		// - Add option for raw gold/silver from trader.
@@ -40,6 +45,7 @@ namespace NPCs.Trading
 			// Set up billboards.
 			_traderBillboard = gameObject.AddComponent<TraderBillboard>();
 			_traderBillboard.Initialise(_trader.Inventory, _trader.Personality, GetPerceivedValue);
+			_traderBillboard.OnSelectionChanged += OnSelectionChanged;
 			_traderBillboard.Hide();
 
 			// Set up player billboard.
@@ -54,6 +60,10 @@ namespace NPCs.Trading
 			_tradeZone.Hide();
 
 			_runner.OnConversationEnded += OnConversationEnd;
+
+			_goldObj = itemdatabase.d.items.FirstOrDefault(i => i != null && i.name == "gold");
+			_silverObj = NPCs.I.GetItem(100);
+			_spawnPos = transform.position + new Vector3(-2.5f, 0, 2.5f);
 		}
 
 		/// <summary>
@@ -110,6 +120,12 @@ namespace NPCs.Trading
 			_playerOffer = items;
 			_playerOfferTotal = items.Values.Sum(data => data.Value);
 			_playerBillboard.Build(_playerOffer, Maths.RoundToNearestHalf(_playerOfferTotal));
+			UpdateProposeLabel();
+		}
+
+		private void OnSelectionChanged()
+		{
+			UpdateProposeLabel();
 		}
 
 		private void OnConversationEnd()
@@ -125,6 +141,57 @@ namespace NPCs.Trading
 				return;
 			}
 
+			bool isSell = _playerOfferTotal > 0f && _traderBillboard.SelectedItems.Count == 0;
+			if (isSell)
+				ResolveSell();
+			else
+				ResolveTradeProposal();
+		}
+
+		private void ResolveSell()
+		{
+			IsActive = false;
+
+			// Calculate gold and silver bar counts from the total.
+			float total = Maths.RoundToNearestHalf(_playerOfferTotal);
+			int goldCount = Mathf.FloorToInt(total);
+			bool needsSilver = (total - goldCount) >= 0.5f;
+
+			// Remove player items from the world.
+			foreach (GameObject item in _playerOffer.Keys)
+			{
+				if (item != null)
+				{
+					foreach (tosaveitemscript save in item.GetComponentsInChildren<tosaveitemscript>())
+						save.removeFromMemory = true;
+					Destroy(item);
+				}
+			}
+
+			for (int i = 0; i < goldCount; i++)
+			{
+				var spawned = GameObject.Instantiate(_goldObj);
+				spawned.transform.position = _spawnPos;
+			}
+
+			if (needsSilver)
+			{
+				var spawned = GameObject.Instantiate(_silverObj);
+				spawned.transform.position = _spawnPos;
+			}
+
+			_traderBillboard.Hide();
+			_playerBillboard.Hide();
+			_tradeZone.Hide();
+			_tradeZone.Close();
+
+			ConversationUI.Show();
+			_runner.AdvanceTo("trade_accepted");
+			_runner.ConversationRange = 5f;
+		}
+
+		private void ResolveTradeProposal()
+		{
 			float traderOfferTotal = _traderBillboard.SelectedItems.Values.Sum(e => e.TotalValue);
 			bool accepted = EvaluateProposal(_playerOfferTotal, traderOfferTotal);
 
@@ -144,8 +211,6 @@ namespace NPCs.Trading
 		{
 			IsActive = false;
 
-			Vector3 spawnPos = transform.position + new Vector3(-2.5f, 0, 2.5f);
-
 			// Spawn the correct quantity of each selected trader item.
 			foreach (var entry in _traderBillboard.SelectedItems)
 			{
@@ -155,7 +220,7 @@ namespace NPCs.Trading
 				for (int i = 0; i < quantity; i++)
 				{
 					var spawned = GameObject.Instantiate(prefab);
-					spawned.transform.position = spawnPos;
+					spawned.transform.position = _spawnPos;
 				}
 
 				_trader.Inventory.Remove(prefab);
@@ -187,6 +252,16 @@ namespace NPCs.Trading
 		{
 			// Leave everything in place, let the player adjust and try again.
 			_runner.AdvanceTo("trade_rejected");
+		}
+
+		private void UpdateProposeLabel()
+		{
+			bool isSell = _playerOfferTotal > 0f && _traderBillboard.SelectedItems.Count == 0;
+
+			if (isSell)
+				_playerBillboard.SetProposeLabel($"Sell for {Maths.RoundToNearestHalf(_playerOfferTotal)}g");
+			else
+				_playerBillboard.SetProposeLabel("Propose trade");
 		}
 	}
 }
