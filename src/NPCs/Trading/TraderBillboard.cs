@@ -22,17 +22,18 @@ namespace NPCs.Trading
 		private Func<ItemData, float> _valueResolver;
 
 		private TextMeshProUGUI _totalLabel;
-		private List<TextMeshProUGUI> _itemValueLabels = new List<TextMeshProUGUI>();
-		private List<bool> _selected = new List<bool>();
-		private List<GameObject> _itemRows = new List<GameObject>();
-		private List<Button> _toggleButtons = new List<Button>();
+		private List<TextMeshProUGUI> _quantityLabels = new List<TextMeshProUGUI>();
+		private List<Button> _minusButtons = new List<Button>();
+		private List<Button> _plusButtons = new List<Button>();
+		private List<int> _selectedQuantities = new List<int>();
 
 		private float _totalSelected = 0f;
 
 		/// <summary>
-		/// Items currently selected by the player, with their resolved values.
+		/// Items currently selected by the player, keyed by prefab with quantity and total value.
 		/// </summary>
-		public Dictionary<GameObject, float> SelectedItems { get; private set; } = new Dictionary<GameObject, float>();
+		public Dictionary<GameObject, (int Quantity, float TotalValue)> SelectedItems { get; private set; }
+			= new Dictionary<GameObject, (int, float)>();
 
 		/// <summary>
 		/// Fired when the selection changes.
@@ -47,7 +48,7 @@ namespace NPCs.Trading
 
 			_display = gameObject.AddComponent<WorldspaceInteractiveDisplay>();
 			_display.SetPosition(new Vector3(-1.25f, 0f, 0f));
-			_display.SetSize(new Vector2(500f, 550f));
+			_display.SetSize(new Vector2(550f, 550f));
 			_display.Init();
 		}
 
@@ -73,18 +74,15 @@ namespace NPCs.Trading
 		public void Build()
 		{
 			_display.Clear();
-			_selected.Clear();
-			_itemValueLabels.Clear();
-			_toggleButtons.Clear();
-			_itemRows.Clear();
+			_selectedQuantities.Clear();
+			_quantityLabels.Clear();
+			_minusButtons.Clear();
+			_plusButtons.Clear();
 			SelectedItems.Clear();
 			_totalSelected = 0f;
 
-			// Header.
 			_display.CreateLabel("Their offer", new RectPercent(50f, 5f, 90f, 8f));
 
-			// Scrollable item list.
-			// Each row: item name, value, toggle button.
 			float yOffset = 15f;
 			float rowHeight = 8f;
 
@@ -93,25 +91,30 @@ namespace NPCs.Trading
 				int index = i;
 				var inventoryItem = _inventory.Items.ElementAt(i);
 				GameObject item = inventoryItem.Key;
-				ItemData data = inventoryItem.Value;
+				ItemData data = inventoryItem.Value.Item1;
+				int maxQuantity = inventoryItem.Value.Item2;
+				float unitValue = _valueResolver(data);
 
-				_selected.Add(false);
+				_selectedQuantities.Add(0);
 
-				// Item name.
-				_display.CreateLabel(data.DisplayName, new RectPercent(27.5f, yOffset, 70f, rowHeight));
+				// Item name and max stock.
+				_display.CreateLabel($"{data.DisplayName} (x{maxQuantity})", new RectPercent(30f, yOffset, 40f, rowHeight));
 
-				// Item value.
-				var valueLabel = _display.CreateLabel($"{_valueResolver(data)}g", new RectPercent(72.5f, yOffset, 25f, rowHeight));
-				_itemValueLabels.Add(valueLabel);
+				// Minus button.
+				var minusBtn = _display.CreateButton("-", $"Remove {data.DisplayName}", new RectPercent(65f, yOffset, 8f, rowHeight), () => AdjustQuantity(index, -1));
+				minusBtn.interactable = false;
+				_minusButtons.Add(minusBtn);
 
-				// Select toggle.
-				var toggleButton = _display.CreateButton(
-					"[ ]",
-					$"Select {item.name}",
-					new RectPercent(91f, yOffset, 15f, rowHeight),
-					() => ToggleSelection(index)
-				);
-				_toggleButtons.Add(toggleButton);
+				// Quantity label.
+				var quantityLabel = _display.CreateLabel("x0", new RectPercent(73f, yOffset, 10f, rowHeight));
+				_quantityLabels.Add(quantityLabel);
+
+				// Plus button.
+				var plusBtn = _display.CreateButton("+", $"Add {data.DisplayName}", new RectPercent(81f, yOffset, 8f, rowHeight), () => AdjustQuantity(index, 1));
+				_plusButtons.Add(plusBtn);
+
+				// Unit value.
+				_display.CreateLabel($"{unitValue}g", new RectPercent(92f, yOffset, 20f, rowHeight));
 
 				yOffset += rowHeight + 1f;
 			}
@@ -119,32 +122,38 @@ namespace NPCs.Trading
 			_totalLabel = _display.CreateLabel("Selected: 0g", new RectPercent(50f, 88f, 90f, 8f));
 		}
 
-		private void ToggleSelection(int index)
+		private void AdjustQuantity(int index, int delta)
 		{
 			if (index >= _inventory.Items.Count) return;
 
-			_selected[index] = !_selected[index];
 			var inventoryItem = _inventory.Items.ElementAt(index);
 			GameObject item = inventoryItem.Key;
-			ItemData data = inventoryItem.Value;
-			float value = _valueResolver(data);
+			ItemData data = inventoryItem.Value.Item1;
+			int maxQuantity = inventoryItem.Value.Item2;
+			float unitValue = _valueResolver(data);
 
-			var label = _toggleButtons[index].GetComponentInChildren<TextMeshProUGUI>();
-			if (label != null)
-				label.text = _selected[index] ? "[x]" : "[ ]";
+			int current = _selectedQuantities[index];
+			int updated = Mathf.Clamp(current + delta, 0, maxQuantity);
+			if (updated == current) return;
 
-			if (_selected[index])
-			{
-				SelectedItems[item] = value;
-				_totalSelected += value;
-			}
-			else
-			{
+			_selectedQuantities[index] = updated;
+
+			// Update selected items.
+			if (updated == 0)
 				SelectedItems.Remove(item);
-				_totalSelected -= value;
-			}
+			else
+				SelectedItems[item] = (updated, unitValue * updated);
 
-			_totalSelected = Mathf.Max(0f, _totalSelected);
+			// Recalculate total.
+			_totalSelected = SelectedItems.Values.Sum(e => e.TotalValue);
+
+			// Update quantity label.
+			_quantityLabels[index].text = $"x{updated}";
+
+			// Update button interactability.
+			_minusButtons[index].interactable = updated > 0;
+			_plusButtons[index].interactable = updated < maxQuantity;
+
 			UpdateTotalLabel();
 			OnSelectionChanged?.Invoke();
 		}

@@ -125,7 +125,7 @@ namespace NPCs.Trading
 				return;
 			}
 
-			float traderOfferTotal = _traderBillboard.SelectedItems.Values.Sum();
+			float traderOfferTotal = _traderBillboard.SelectedItems.Values.Sum(e => e.TotalValue);
 			bool accepted = EvaluateProposal(_playerOfferTotal, traderOfferTotal);
 
 			if (accepted)
@@ -144,13 +144,21 @@ namespace NPCs.Trading
 		{
 			IsActive = false;
 
-			// Hand trader items to the player — spawn near the player.
-			Vector3 spawnPos = mainscript.M.player.transform.position + mainscript.M.player.transform.forward * 1.5f;
-			foreach (GameObject item in _traderBillboard.SelectedItems.Keys)
+			Vector3 spawnPos = transform.position + new Vector3(-2.5f, 0, 2.5f);
+
+			// Spawn the correct quantity of each selected trader item.
+			foreach (var entry in _traderBillboard.SelectedItems)
 			{
-				var spawned = GameObject.Instantiate(item);
-				spawned.transform.position = spawnPos;
-				_trader.Inventory.Remove(item);
+				GameObject prefab = entry.Key;
+				int quantity = entry.Value.Quantity;
+
+				for (int i = 0; i < quantity; i++)
+				{
+					var spawned = GameObject.Instantiate(prefab);
+					spawned.transform.position = spawnPos;
+				}
+
+				_trader.Inventory.Remove(prefab);
 			}
 
 			// Remove player items from the world.
@@ -172,6 +180,7 @@ namespace NPCs.Trading
 			// Return to dialogue at the accepted node.
 			ConversationUI.Show();
 			_runner.AdvanceTo("trade_accepted");
+			_runner.ConversationRange = 5f;
 		}
 
 		private void ResolveRejected()
@@ -179,13 +188,5 @@ namespace NPCs.Trading
 			// Leave everything in place, let the player adjust and try again.
 			_runner.AdvanceTo("trade_rejected");
 		}
-
-		//private void Update()
-		//{
-		//	if (!IsActive) return;
-
-		//	if (Input.GetButtonDown("Cancel"))
-		//		Cancel();
-		//}
 	}
 }

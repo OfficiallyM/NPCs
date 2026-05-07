@@ -21,7 +21,7 @@ namespace NPCs.Trading
 		{
 			_display = gameObject.AddComponent<WorldspaceInteractiveDisplay>();
 			_display.SetPosition(new Vector3(1.25f, 0f, 0f));
-			_display.SetSize(new Vector2(500f, 550f));
+			_display.SetSize(new Vector2(400f, 550f));
 			_display.Init();
 		}
 

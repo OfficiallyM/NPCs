@@ -22,7 +22,7 @@ namespace NPCs.Trading
 		/// <summary>
 		/// The trader's current stock..
 		/// </summary>
-		public Dictionary<GameObject, ItemData> Items { get; private set; } = new Dictionary<GameObject, ItemData>();
+		public Dictionary<GameObject, (ItemData data, int quantity)> Items { get; private set; } = new Dictionary<GameObject, (ItemData, int)>();
 		private static Dictionary<GameObject, ItemData> _pool = new Dictionary<GameObject, ItemData>();
 
 		/// <summary>
@@ -41,7 +41,8 @@ namespace NPCs.Trading
 			for (int i = 0; i < count; i++)
 			{
 				var entry = _pool.ElementAt(_rng.Next(_pool.Count));
-				Items.Add(entry.Key, entry.Value);
+				int quantity = RollQuantity(entry.Value.Category);
+				Items.Add(entry.Key, (entry.Value, quantity));
 			}
 		}
 
@@ -70,6 +71,33 @@ namespace NPCs.Trading
 				if (data.Value <= 0f) continue;
 
 				_pool.Add(item, data);
+			}
+		}
+
+		private int RollQuantity(ItemCategory category)
+		{
+			switch (category)
+			{
+				case ItemCategory.BigChassis:
+				case ItemCategory.SmallChassis:
+				case ItemCategory.BikeChassis:
+				case ItemCategory.Trailer:
+					return 1;
+
+				case ItemCategory.Engine:
+				case ItemCategory.Radiator:
+				case ItemCategory.Tank:
+				case ItemCategory.Wheel:
+				case ItemCategory.Tire:
+				case ItemCategory.Meter:
+				case ItemCategory.Light:
+				case ItemCategory.Part:
+				case ItemCategory.Gun:
+				case ItemCategory.Melee:
+					return _rng.Next(1, 4); // 1-3.
+
+				default:
+					return _rng.Next(1, 7); // 1-6.
 			}
 		}
 	}
