@@ -28,11 +28,6 @@ namespace NPCs.Trading
 		private GameObject _silverObj;
 		private Vector3 _spawnPos;
 
-		// TODO:
-		// - Add support for multiple of the same trader item. Needs to roll quantity in inventory and change to +/- buttons.
-		// - Add option for raw gold/silver from trader.
-		// - Check trader personality rolls / margin / deal threshold are working.
-
 		/// <summary>
 		/// Whether a trade session is currently active.
 		/// </summary>
@@ -175,13 +170,15 @@ namespace NPCs.Trading
 			for (int i = 0; i < goldCount; i++)
 			{
 				var spawned = GameObject.Instantiate(_goldObj);
-				spawned.transform.position = _spawnPos;
+				Vector2 randomCircle = Random.insideUnitCircle * 0.2f;
+				spawned.transform.position = _spawnPos + new Vector3(randomCircle.x, 0f, randomCircle.y);
 			}
 
 			if (needsSilver)
 			{
 				var spawned = GameObject.Instantiate(_silverObj);
-				spawned.transform.position = _spawnPos;
+				Vector2 randomCircle = Random.insideUnitCircle * 0.2f;
+				spawned.transform.position = _spawnPos + new Vector3(randomCircle.x, 0f, randomCircle.y);
 			}
 
 			_traderBillboard.Hide();
@@ -233,13 +230,15 @@ namespace NPCs.Trading
 				for (int i = 0; i < goldChange; i++)
 				{
 					var spawned = GameObject.Instantiate(_goldObj);
-					spawned.transform.position = _spawnPos;
+					Vector2 randomCircle = Random.insideUnitCircle * 2.5f;
+					spawned.transform.position = _spawnPos + new Vector3(randomCircle.x, 0f, randomCircle.y);
 				}
 
 				if (silverChange)
 				{
 					var spawned = GameObject.Instantiate(_silverObj);
-					spawned.transform.position = _spawnPos;
+					Vector2 randomCircle = Random.insideUnitCircle * 2.5f;
+					spawned.transform.position = _spawnPos + new Vector3(randomCircle.x, 0f, randomCircle.y);
 				}
 			}
 
@@ -252,7 +251,8 @@ namespace NPCs.Trading
 				for (int i = 0; i < quantity; i++)
 				{
 					var spawned = GameObject.Instantiate(prefab);
-					spawned.transform.position = _spawnPos;
+					Vector2 randomCircle = Random.insideUnitCircle * 2.5f;
+					spawned.transform.position = _spawnPos + new Vector3(randomCircle.x, 0f, randomCircle.y);
 				}
 
 				_trader.Inventory.Remove(prefab, quantity);
