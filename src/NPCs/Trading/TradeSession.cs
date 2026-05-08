@@ -1,5 +1,7 @@
 ﻿using NPCs.Dialogue;
 using NPCs.Enums;
+using NPCs.Trading.Core;
+using NPCs.Trading.Value;
 using NPCs.Utilities;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,7 +48,7 @@ namespace NPCs.Trading
 
 			// Set up player billboard.
 			_playerBillboard = gameObject.AddComponent<PlayerBillboard>();
-			_playerBillboard.Initialise();
+			_playerBillboard.Initialise(GetPerceivedPlayerValue);
 			_playerBillboard.OnProposed += OnProposed;
 			_playerBillboard.Hide();
 
@@ -103,18 +105,34 @@ namespace NPCs.Trading
 			_runner.ConversationRange = 5f;
 		}
 
-		public float GetPerceivedValue(ItemData data)
+		public float GetPerceivedValue(TraderItem item)
 		{
+			if (item.Data == null) return 0f;
+
+			float fluctuation = _trader.Personality.ItemFluctuation.TryGetValue(item.Data.Category, out float f) ? f : 0f;
+			float conditionDiscount = item.Condition != null ? _trader.Personality.ConditionDiscounts[item.Condition.Value] : 0f;
+			float value = item.Data.Value * (1f + fluctuation) * (1f - conditionDiscount);
+			return Mathf.Max(0.5f, Maths.RoundToNearestHalf(value));
+		}
+
+		public float GetPerceivedPlayerValue(GameObject item)
+		{
+			ItemData data = ItemRegistry.GetData(item);
 			if (data == null) return 0f;
 
 			float fluctuation = _trader.Personality.ItemFluctuation.TryGetValue(data.Category, out float f) ? f : 0f;
-			return Mathf.Max(0.5f, Maths.RoundToNearestHalf(data.Value * (1f + fluctuation)));
+
+			partconditionscript condition = item.GetComponentInChildren<partconditionscript>();
+			float conditionDiscount = condition != null ? _trader.Personality.ConditionDiscounts[condition.state] : 0f;
+
+			float value = data.Value * (1f + fluctuation) * (1f - conditionDiscount);
+			return Mathf.Max(0.5f, Maths.RoundToNearestHalf(value));
 		}
 
 		private void OnPlayerOfferChanged(Dictionary<GameObject, ItemData> items)
 		{
 			_playerOffer = items;
-			_playerOfferTotal = items.Values.Sum(data => data.Value);
+			_playerOfferTotal = items.Keys.Sum(data => GetPerceivedPlayerValue(data));
 			_playerBillboard.Build(_playerOffer, Maths.RoundToNearestHalf(_playerOfferTotal));
 			UpdateProposeLabel();
 		}
@@ -245,17 +263,22 @@ namespace NPCs.Trading
 			// Spawn the correct quantity of each selected trader item.
 			foreach (var entry in _traderBillboard.SelectedItems)
 			{
-				GameObject prefab = entry.Key;
+				TraderItem traderItem = entry.Key;
 				int quantity = entry.Value.Quantity;
 
 				for (int i = 0; i < quantity; i++)
 				{
-					var spawned = GameObject.Instantiate(prefab);
+					var spawned = GameObject.Instantiate(traderItem.Prefab);
 					Vector2 randomCircle = Random.insideUnitCircle * 2.5f;
 					spawned.transform.position = _spawnPos + new Vector3(randomCircle.x, 0f, randomCircle.y);
+
+					// Apply stored condition and colour.
+					partconditionscript condition = spawned.GetComponentInChildren<partconditionscript>();
+					if (condition != null && traderItem.Condition.HasValue)
+						condition.StartRandom2(traderItem.Color ?? Color.white, 0, 4, traderItem.Condition.Value);
 				}
 
-				_trader.Inventory.Remove(prefab, quantity);
+				_trader.Inventory.Remove(_traderBillboard.SelectedItems.Keys.ToList().IndexOf(traderItem), quantity);
 			}
 
 			// Remove player items from the world.

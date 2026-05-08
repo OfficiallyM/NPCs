@@ -50,11 +50,11 @@ namespace NPCs.Trading
 			// Ranges widen at lower tiers.
 			var ranges = new (float min, float max)[]
 			{
-				(0.00f, 0.00f), // Tier 0 - Pristine, always full value.
-                (0.05f, 0.15f), // Tier 1 - Dull.
-                (0.10f, 0.30f), // Tier 2 - Rough.
-                (0.20f, 0.50f), // Tier 3 - Crusty.
-                (0.35f, 0.70f), // Tier 4 - Rusty.
+				(0.00f, 0.00f), // Tier 0 - Pristine.
+				(0.10f, 0.25f), // Tier 1 - Dull.
+				(0.20f, 0.40f), // Tier 2 - Rough.
+				(0.35f, 0.60f), // Tier 3 - Crusty.
+				(0.50f, 0.80f), // Tier 4 - Rusty.
             };
 
 			float[] discounts = new float[ranges.Length];

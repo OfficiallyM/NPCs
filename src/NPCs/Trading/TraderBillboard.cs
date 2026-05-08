@@ -1,4 +1,5 @@
 ﻿using NPCs.Common;
+using NPCs.Trading.Core;
 using NPCs.Utilities;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace NPCs.Trading
 		private WorldspaceInteractiveDisplay _display;
 		private TraderInventory _inventory;
 		private TraderPersonality _personality;
-		private Func<ItemData, float> _valueResolver;
+		private Func<TraderItem, float> _valueResolver;
 
 		private TextMeshProUGUI _totalLabel;
 		private List<TextMeshProUGUI> _quantityLabels = new List<TextMeshProUGUI>();
@@ -31,15 +32,15 @@ namespace NPCs.Trading
 		/// <summary>
 		/// Items currently selected by the player, keyed by prefab with quantity and total value.
 		/// </summary>
-		public Dictionary<GameObject, (int Quantity, float TotalValue)> SelectedItems { get; private set; }
-			= new Dictionary<GameObject, (int, float)>();
+		public Dictionary<TraderItem, (int Quantity, float TotalValue)> SelectedItems { get; private set; }
+			= new Dictionary<TraderItem, (int, float)>();
 
 		/// <summary>
 		/// Fired when the selection changes.
 		/// </summary>
 		public event System.Action OnSelectionChanged;
 
-		public void Initialise(TraderInventory inventory, TraderPersonality personality, Func<ItemData, float> valueResolver)
+		public void Initialise(TraderInventory inventory, TraderPersonality personality, Func<TraderItem, float> valueResolver)
 		{
 			_inventory = inventory;
 			_personality = personality;
@@ -47,7 +48,7 @@ namespace NPCs.Trading
 
 			_display = gameObject.AddComponent<WorldspaceInteractiveDisplay>();
 			_display.SetPosition(new Vector3(-1.25f, 0.15f, 0f));
-			_display.SetSize(new Vector2(550f, 550f));
+			_display.SetSize(new Vector2(700f, 550f));
 			_display.Init();
 		}
 
@@ -88,20 +89,20 @@ namespace NPCs.Trading
 			{
 				int index = i;
 				var inventoryItem = _inventory.Items.ElementAt(i);
-				GameObject item = inventoryItem.Key;
-				ItemData data = inventoryItem.Value.data;
-				int maxQuantity = inventoryItem.Value.quantity;
-				float unitValue = _valueResolver(data);
+				float unitValue = _valueResolver(inventoryItem);
 
 				_selectedQuantities.Add(0);
 
 				RectTransform row = scrollList.AddRow();
 
 				// Item name.
-				AddLabelToRow(row, $"{data.DisplayName} (x{maxQuantity})", new Vector2(0f, 0f), new Vector2(0.5f, 1f));
+				string displayName = inventoryItem.Condition.HasValue
+					? $"{inventoryItem.Data.DisplayName} {Trade.ConditionTag(inventoryItem.Condition)}"
+					: inventoryItem.Data.DisplayName;
+				AddLabelToRow(row, $"{displayName} (x{inventoryItem.Quantity})", new Vector2(0f, 0f), new Vector2(0.5f, 1f));
 
 				// Minus button.
-				var minusBtn = AddButtonToRow(row, "-", $"Remove {data.DisplayName}", new Vector2(0.6f, 0.1f), new Vector2(0.68f, 0.9f), () => AdjustQuantity(index, -1));
+				var minusBtn = AddButtonToRow(row, "-", $"Remove {inventoryItem.Data.DisplayName}", new Vector2(0.6f, 0.1f), new Vector2(0.68f, 0.9f), () => AdjustQuantity(index, -1));
 				minusBtn.interactable = false;
 				_minusButtons.Add(minusBtn);
 
@@ -110,7 +111,7 @@ namespace NPCs.Trading
 				_quantityLabels.Add(quantityLabel);
 
 				// Plus button.
-				var plusBtn = AddButtonToRow(row, "+", $"Add {data.DisplayName}", new Vector2(0.80f, 0.1f), new Vector2(0.88f, 0.9f), () => AdjustQuantity(index, 1));
+				var plusBtn = AddButtonToRow(row, "+", $"Add {inventoryItem.Data.DisplayName}", new Vector2(0.80f, 0.1f), new Vector2(0.88f, 0.9f), () => AdjustQuantity(index, 1));
 				_plusButtons.Add(plusBtn);
 
 				// Unit value.
@@ -183,22 +184,19 @@ namespace NPCs.Trading
 			if (index >= _inventory.Items.Count) return;
 
 			var inventoryItem = _inventory.Items.ElementAt(index);
-			GameObject item = inventoryItem.Key;
-			ItemData data = inventoryItem.Value.Item1;
-			int maxQuantity = inventoryItem.Value.Item2;
-			float unitValue = _valueResolver(data);
+			float unitValue = _valueResolver(inventoryItem);
 
 			int current = _selectedQuantities[index];
-			int updated = Mathf.Clamp(current + delta, 0, maxQuantity);
+			int updated = Mathf.Clamp(current + delta, 0, inventoryItem.Quantity);
 			if (updated == current) return;
 
 			_selectedQuantities[index] = updated;
 
 			// Update selected items.
 			if (updated == 0)
-				SelectedItems.Remove(item);
+				SelectedItems.Remove(inventoryItem);
 			else
-				SelectedItems[item] = (updated, unitValue * updated);
+				SelectedItems[inventoryItem] = (updated, unitValue * updated);
 
 			// Recalculate total.
 			_totalSelected = SelectedItems.Values.Sum(e => e.TotalValue);
@@ -208,7 +206,7 @@ namespace NPCs.Trading
 
 			// Update button interactability.
 			_minusButtons[index].interactable = updated > 0;
-			_plusButtons[index].interactable = updated < maxQuantity;
+			_plusButtons[index].interactable = updated < inventoryItem.Quantity;
 
 			UpdateTotalLabel();
 			OnSelectionChanged?.Invoke();

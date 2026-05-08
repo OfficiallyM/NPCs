@@ -1,5 +1,7 @@
 ﻿using NPCs.Common;
+using NPCs.Trading.Core;
 using NPCs.Utilities;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -16,14 +18,17 @@ namespace NPCs.Trading
 		private WorldspaceInteractiveDisplay _display;
 		private Button _proposeButton;
 		private TextMeshProUGUI _totalLabel;
+		private Func<GameObject, float> _valueResolver;
 
 		/// <summary>
 		/// Fired when the player proposes the trade.
 		/// </summary>
 		public event System.Action OnProposed;
 
-		public void Initialise()
+		public void Initialise(Func<GameObject, float> valueResolver)
 		{
+			_valueResolver = valueResolver;
+
 			_display = gameObject.AddComponent<WorldspaceInteractiveDisplay>();
 			_display.SetPosition(new Vector3(1.25f, 0.15f, 0f));
 			_display.SetSize(new Vector2(400f, 550f));
@@ -62,8 +67,12 @@ namespace NPCs.Trading
 			foreach (var entry in items)
 			{
 				RectTransform row = scrollList.AddRow();
-				AddLabelToRow(row, entry.Value.DisplayName, new Vector2(0f, 0f), new Vector2(0.8f, 1f));
-				AddLabelToRow(row, $"{Maths.RoundToNearestHalf(entry.Value.Value)}g", new Vector2(0.85f, 0f), new Vector2(1f, 1f));
+				partconditionscript condition = entry.Key.GetComponentInChildren<partconditionscript>();
+				string displayName = condition != null
+					? $"{entry.Value.DisplayName} {Trade.ConditionTag(condition.state)}"
+					: entry.Value.DisplayName;
+				AddLabelToRow(row, displayName, new Vector2(0f, 0f), new Vector2(0.8f, 1f));
+				AddLabelToRow(row, $"{_valueResolver(entry.Key)}g", new Vector2(0.85f, 0f), new Vector2(1f, 1f));
 			}
 
 			_totalLabel = _display.CreateLabel($"Total: {total}g", new RectPercent(50f, 80f, 90f, 8f));

@@ -1,33 +1,33 @@
 ﻿using NPCs.Enums;
 using System.Collections.Generic;
 
-namespace NPCs.Trading
+namespace NPCs.Trading.Value
 {
 	public static class BaseValues
 	{
 		public const float Fallback = 0.5f;
 
 		// Vehicle/Parts.
-		public const float BigChassis = 10f;
-		public const float SmallChassis = 7f;
-		public const float BikeChassis = 5f;
-		public const float Trailer = 2.5f;
-		public const float Part = 1f;
-		public const float Engine = 3.5f;
-		public const float Radiator = 2.5f;
-		public const float Tank = 2f;
-		public const float Wheel = 1.5f;
-		public const float Tire = 1.5f;
-		public const float Meter = 0.5f;
-		public const float Light = 0.5f;
+		public const float BigChassis = 40f;
+		public const float SmallChassis = 25f;
+		public const float BikeChassis = 15f;
+		public const float Trailer = 10f;
+		public const float Part = 4f;
+		public const float Engine = 15f;
+		public const float Radiator = 8f;
+		public const float Tank = 6f;
+		public const float Wheel = 5f;
+		public const float Tire = 4f;
+		public const float Meter = 2f;
+		public const float Light = 2f;
 
 		// Other.
-		public const float Gun = 2f;
-		public const float Melee = 1.5f;
-		public const float Cleaning = 0.5f;
-		public const float Food = 0.5f;
-		public const float Wearable = 0.5f;
-		public const float Usable = 0.5f;
+		public const float Gun = 8f;
+		public const float Melee = 5f;
+		public const float Cleaning = 2f;
+		public const float Food = 2f;
+		public const float Wearable = 2f;
+		public const float Usable = 2f;
 
 		// Fluids.
 		public const float Gas = 0.25f;

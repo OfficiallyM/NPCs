@@ -1,6 +1,6 @@
 ﻿using NPCs.Enums;
 
-namespace NPCs.Trading
+namespace NPCs.Trading.Core
 {
 	public class ItemData
 	{

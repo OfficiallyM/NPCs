@@ -1,5 +1,7 @@
 ﻿using NPCs.Common;
 using NPCs.Enums;
+using NPCs.Trading.Core;
+using NPCs.Trading.Value;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -20,9 +22,9 @@ namespace NPCs.Trading
 		}
 
 		/// <summary>
-		/// The trader's current stock..
+		/// The trader's current stock.
 		/// </summary>
-		public Dictionary<GameObject, (ItemData data, int quantity)> Items { get; private set; } = new Dictionary<GameObject, (ItemData, int)>();
+		public List<TraderItem> Items { get; private set; } = new List<TraderItem>();
 		private static Dictionary<GameObject, ItemData> _pool = new Dictionary<GameObject, ItemData>();
 
 		/// <summary>
@@ -41,67 +43,118 @@ namespace NPCs.Trading
 			for (int i = 0; i < count; i++)
 			{
 				var entry = _pool.ElementAt(_rng.Next(_pool.Count));
+				var conditionScript = entry.Key.GetComponentInChildren<partconditionscript>();
+				int? condition = null;
+				Color? color = null;
+				if (conditionScript != null)
+				{
+					condition = _rng.Next(0, 5);
+					if (conditionScript.CanPaint())
+						color = RollColor(entry.Key);
+				}
 				int quantity = RollQuantity(entry.Value.Category);
 
-				if (Items.ContainsKey(entry.Key))
+				// Find existing entry with same prefab, condition and color to stack quantity.
+				int existingIndex = Items.FindIndex(i => i.Prefab == entry.Key && i.Condition == condition);
+				if (existingIndex >= 0)
 				{
-					var existing = Items[entry.Key];
-					Items[entry.Key] = (existing.data, existing.quantity + quantity);
+					TraderItem existing = Items[existingIndex];
+					existing.Quantity += quantity;
+					Items[existingIndex] = existing;
 				}
 				else
 				{
-					Items.Add(entry.Key, (entry.Value, quantity));
+					Items.Add(new TraderItem
+					{
+						Prefab = entry.Key,
+						Data = entry.Value,
+						Condition = condition,
+						Color = color,
+						Quantity = quantity,
+					});
 				}
 			}
 		}
 
 		/// <summary>
-		/// Adds an item to the trader's stock, incrementing quantity if already present.
+		/// Adds a live scene instance to the trader's stock.
+		/// Reads condition and colour from the instance's partconditionscript if present.
 		/// </summary>
-		/// <param name="item">Item prefab to add.</param>
-		/// <param name="data">Item data for the prefab.</param>
+		/// <param name="item">Live scene instance to add.</param>
+		/// <param name="data">Item data for the instance.</param>
 		public void Add(GameObject item, ItemData data)
 		{
+			if (data.Category == ItemCategory.Currency) return;
+
 			string name = item.name.Replace("(Clone)", "").Trim();
-
-			// Don't add currency to inventory.
-			if (data.Category == ItemCategory.Currency)
-				return;
-
-			// Find matching prefab by name and increment quantity if already in stock.
-			foreach (var key in Items.Keys.ToList())
-			{
-				if (key.name == name)
-				{
-					var existing = Items[key];
-					Items[key] = (existing.data, existing.quantity + 1);
-					return;
-				}
-			}
-
-			// New item type, add as a new entry with quantity 1.
 			GameObject prefab = _pool.Keys.FirstOrDefault(k => k.name == name);
-			if (prefab != null)
-				Items.Add(prefab, (data, 1));
+			if (prefab == null) return;
+
+			// Read condition and colour from live instance if available.
+			partconditionscript condition = item.GetComponentInChildren<partconditionscript>();
+			int? conditionState = condition?.state;
+			Color? color = null;
+			if (condition != null && condition.CanPaint())
+				color = condition.color;
+
+			int existingIndex = Items.FindIndex(i => i.Prefab == prefab && i.Condition == conditionState && i.Color == color);
+			if (existingIndex >= 0)
+			{
+				TraderItem existing = Items[existingIndex];
+				existing.Quantity++;
+				Items[existingIndex] = existing;
+			}
+			else
+			{
+				Items.Add(new TraderItem
+				{
+					Prefab = prefab,
+					Data = data,
+					Condition = conditionState,
+					Color = color,
+					Quantity = 1,
+				});
+			}
 		}
 
 		/// <summary>
-		/// Decrements the quantity of an item in stock by the given amount.
+		/// Decrements the quantity of an item at a specific index.
 		/// Removes the entry entirely if quantity reaches zero.
 		/// </summary>
-		/// <param name="item">Item to remove.</param>
+		/// <param name="index">Index of the item in the list.</param>
 		/// <param name="quantity">Quantity to remove.</param>
-		public void Remove(GameObject item, int quantity = 1)
+		public void Remove(int index, int quantity = 1)
 		{
-			if (!Items.ContainsKey(item)) return;
+			if (index < 0 || index >= Items.Count) return;
 
-			var existing = Items[item];
-			int updated = existing.quantity - quantity;
+			TraderItem item = Items[index];
+			int updated = item.Quantity - quantity;
 
 			if (updated <= 0)
-				Items.Remove(item);
+				Items.RemoveAt(index);
 			else
-				Items[item] = (existing.data, updated);
+			{
+				item.Quantity = updated;
+				Items[index] = item;
+			}
+		}
+
+		private Color RollColor(GameObject prefab)
+		{
+			partconditionscript condition = prefab.GetComponentInChildren<partconditionscript>();
+			if (condition == null) return Color.white;
+
+			// Replicate FStart material lookup to get colors without requiring FStart to have run.
+			string tipus = condition.useOnlyMaterialTipusForMaterial ? condition.materialTipus : condition.tipus;
+
+			foreach (mainscript.conditionmaterial mat in mainscript.M.conditionmaterials)
+			{
+				if (mat.tipus != tipus) continue;
+				if (mat.colors == null || mat.colors.Count == 0) return Color.white;
+				return mat.colors[_rng.Next(mat.colors.Count)];
+			}
+
+			return Color.white;
 		}
 
 		private void BuildItemPool()
@@ -143,10 +196,10 @@ namespace NPCs.Trading
 				case ItemCategory.Part:
 				case ItemCategory.Gun:
 				case ItemCategory.Melee:
-					return _rng.Next(1, 4); // 1-3.
+					return _rng.Next(1, 4);
 
 				default:
-					return _rng.Next(1, 7); // 1-6.
+					return _rng.Next(1, 7);
 			}
 		}
 	}

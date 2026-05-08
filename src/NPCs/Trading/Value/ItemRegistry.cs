@@ -1,10 +1,11 @@
 ﻿using NPCs.Enums;
+using NPCs.Trading.Core;
 using NPCs.Utilities;
 using System.Collections.Generic;
 using TLDLoader;
 using UnityEngine;
 
-namespace NPCs.Trading
+namespace NPCs.Trading.Value
 {
 	public static class ItemRegistry
 	{

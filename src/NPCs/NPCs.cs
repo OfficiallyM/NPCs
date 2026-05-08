@@ -2,6 +2,7 @@
 using NPCs.Dialogue;
 using NPCs.Dialogue.Core;
 using NPCs.Trading;
+using NPCs.Trading.Value;
 using NPCs.Utilities;
 using System.Collections.Generic;
 using System.Linq;
