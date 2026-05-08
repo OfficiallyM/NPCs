@@ -205,7 +205,7 @@ namespace NPCs.Trading
 		private bool EvaluateProposal(float playerOffer, float traderOffer)
 		{
 			if (traderOffer <= 0f) return true;
-			float effectiveOffer = IsAllCurrency() ? playerOffer * 1.2f : playerOffer;
+			float effectiveOffer = IsAllCurrency() ? playerOffer * 1.05f : playerOffer;
 			return effectiveOffer >= traderOffer * _trader.Personality.MinimumDealThreshold;
 		}
 
