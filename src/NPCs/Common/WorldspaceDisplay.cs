@@ -91,7 +91,7 @@ namespace NPCs.Common
 			_text.text = string.Empty;
 			// Change text material shader to not be affected by light.
 			_text.fontSharedMaterial = TMP_Settings.defaultFontAsset.material;
-			_text.fontSharedMaterial.shader = Shader.Find("TextMeshPro/Distance Field");
+			_text.fontSharedMaterial.shader = Shader.Find("TextMeshPro/Distance Field Overlay");
 
 			_isReady = true;
 		}

@@ -67,9 +67,9 @@ namespace NPCs.Common
 			if (!_isReady || !_isVisible) return;
 
 			// Always face camera.
-			_canvas.transform.rotation = Quaternion.LookRotation(
-				_canvas.transform.position - _cam.transform.position
-			);
+			Vector3 directionToCamera = _cam.transform.position - _canvas.transform.position;
+			directionToCamera.y = 0f;
+			_canvas.transform.rotation = Quaternion.LookRotation(-directionToCamera);
 
 			float distance = Vector3.Distance(mainscript.M.player.transform.position, _canvas.transform.position);
 			if (distance > _interactDistance)
@@ -108,6 +108,7 @@ namespace NPCs.Common
 
 				if (Input.GetKeyDown(KeyCode.E))
 					button.onClick.Invoke();
+				return;
 			}
 		}
 
@@ -171,7 +172,7 @@ namespace NPCs.Common
 			text.fontSize = 28f;
 			text.alignment = TextAlignmentOptions.Center;
 			text.fontSharedMaterial = TMP_Settings.defaultFontAsset.material;
-			text.fontSharedMaterial.shader = Shader.Find("TextMeshPro/Distance Field");
+			text.fontSharedMaterial.shader = Shader.Find("TextMeshPro/Distance Field Overlay");
 
 			RectTransform labelRect = labelObj.GetComponent<RectTransform>();
 			labelRect.anchorMin = Vector2.zero;
@@ -199,7 +200,7 @@ namespace NPCs.Common
 			tmp.fontSize = 28f;
 			tmp.alignment = TextAlignmentOptions.Center;
 			tmp.fontSharedMaterial = TMP_Settings.defaultFontAsset.material;
-			tmp.fontSharedMaterial.shader = Shader.Find("TextMeshPro/Distance Field");
+			tmp.fontSharedMaterial.shader = Shader.Find("TextMeshPro/Distance Field Overlay");
 
 			SetRect(obj.GetComponent<RectTransform>(), rect);
 			_labels.Add(obj);
@@ -217,6 +218,67 @@ namespace NPCs.Common
 				(rect.X / 100f) * _size.x - _size.x / 2f,
 				-((rect.Y / 100f) * _size.y - _size.y / 2f)
 			);
+		}
+
+		/// <summary>
+		/// Creates a scrollable list within the display.
+		/// Header and footer elements should be created separately outside the scroll area.
+		/// </summary>
+		/// <param name="topPercent">Y position of the top of the scroll area as a percentage.</param>
+		/// <param name="bottomPercent">Y position of the bottom of the scroll area as a percentage.</param>
+		/// <param name="visibleRows">Number of rows visible before scrolling.</param>
+		/// <param name="rowHeightPercent">Height of each row as a percentage of canvas height.</param>
+		/// <returns>A ScrollList for adding rows to.</returns>
+		public ScrollList CreateScrollList(float topPercent, float bottomPercent, int visibleRows, float rowHeightPercent)
+		{
+			float rowHeightPixels = rowHeightPercent * (_size.y / 100f);
+			float viewportHeightPixels = visibleRows * rowHeightPixels;
+			float topPixels = topPercent * (_size.y / 100f);
+
+			// Viewport.
+			GameObject viewportObj = new GameObject("ScrollViewport");
+			viewportObj.transform.SetParent(_canvas.transform, false);
+
+			RectTransform viewportRect = viewportObj.AddComponent<RectTransform>();
+			float centreY = ((topPercent + (topPercent + (visibleRows * rowHeightPercent))) / 2f);
+			float viewportY = -((centreY / 100f) * _size.y - _size.y / 2f);
+
+			viewportRect.anchorMin = viewportRect.anchorMax = new Vector2(0.5f, 0.5f);
+			viewportRect.pivot = new Vector2(0.5f, 0.5f);
+			viewportRect.sizeDelta = new Vector2(_size.x * 0.9f, viewportHeightPixels);
+			viewportRect.anchoredPosition = new Vector2(0f, viewportY - rowHeightPixels * 0.1f);
+
+			//viewportObj.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.1f);
+			//viewportObj.AddComponent<Mask>().showMaskGraphic = false;
+			viewportObj.AddComponent<RectMask2D>();
+
+			// Content container.
+			GameObject contentObj = new GameObject("ScrollContent");
+			contentObj.transform.SetParent(viewportObj.transform, false);
+
+			RectTransform contentRect = contentObj.AddComponent<RectTransform>();
+			contentRect.anchorMin = new Vector2(0f, 1f);
+			contentRect.anchorMax = new Vector2(1f, 1f);
+			contentRect.pivot = new Vector2(0.5f, 1f);
+			contentRect.sizeDelta = new Vector2(0f, 0f);
+			contentRect.anchoredPosition = Vector2.zero;
+
+			// Scroll arrows.
+			var upButton = CreateButton("▲", "Scroll up", new RectPercent(95f, topPercent - 5f, 8f, 6f), null);
+			float bottomY = topPercent + (viewportHeightPixels / _size.y * 100f);
+			var downButton = CreateButton("▼", "Scroll down", new RectPercent(95f, bottomY + 5f, 8f, 6f), null);
+
+			ScrollList scrollList = new ScrollList(viewportRect, contentRect, upButton, downButton, rowHeightPercent, visibleRows, _size);
+
+			upButton.onClick.AddListener(() => scrollList.ScrollUp());
+			downButton.onClick.AddListener(() => scrollList.ScrollDown());
+
+			return scrollList;
+		}
+
+		public void RegisterLabel(GameObject label)
+		{
+			_labels.Add(label);
 		}
 	}
 }
