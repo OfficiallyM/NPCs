@@ -99,7 +99,7 @@ namespace NPCs.Trading
 				string displayName = inventoryItem.Condition.HasValue
 					? $"{inventoryItem.Data.DisplayName} {Trade.ConditionTag(inventoryItem.Condition)}"
 					: inventoryItem.Data.DisplayName;
-				AddLabelToRow(row, $"{displayName} (x{inventoryItem.Quantity})", new Vector2(0f, 0f), new Vector2(0.5f, 1f));
+				AddLabelToRow(row, $"{displayName} (x{inventoryItem.Quantity})", new Vector2(0f, 0f), new Vector2(0.58f, 1f));
 
 				// Minus button.
 				var minusBtn = AddButtonToRow(row, "-", $"Remove {inventoryItem.Data.DisplayName}", new Vector2(0.6f, 0.1f), new Vector2(0.68f, 0.9f), () => AdjustQuantity(index, -1));
@@ -132,6 +132,7 @@ namespace NPCs.Trading
 			tmp.text = text;
 			tmp.fontSize = 26f;
 			tmp.alignment = TextAlignmentOptions.MidlineLeft;
+			tmp.overflowMode = TextOverflowModes.Ellipsis;
 			tmp.fontSharedMaterial = TMP_Settings.defaultFontAsset.material;
 			tmp.fontSharedMaterial.shader = Shader.Find("TextMeshPro/Distance Field Overlay");
 

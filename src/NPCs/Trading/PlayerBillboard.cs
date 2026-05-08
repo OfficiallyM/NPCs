@@ -31,7 +31,7 @@ namespace NPCs.Trading
 
 			_display = gameObject.AddComponent<WorldspaceInteractiveDisplay>();
 			_display.SetPosition(new Vector3(1.25f, 0.15f, 0f));
-			_display.SetSize(new Vector2(400f, 550f));
+			_display.SetSize(new Vector2(500f, 550f));
 			_display.Init();
 		}
 
@@ -111,6 +111,7 @@ namespace NPCs.Trading
 			tmp.text = text;
 			tmp.fontSize = 26f;
 			tmp.alignment = TextAlignmentOptions.MidlineLeft;
+			tmp.overflowMode = TextOverflowModes.Ellipsis;
 			tmp.fontSharedMaterial = TMP_Settings.defaultFontAsset.material;
 			tmp.fontSharedMaterial.shader = Shader.Find("TextMeshPro/Distance Field Overlay");
 
