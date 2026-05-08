@@ -108,7 +108,7 @@ namespace NPCs.Dialogue
 				else
 				{
 					var tradeSession = hitInfo.transform.GetComponentInParent<TradeSession>();
-					if (tradeSession != null && tradeSession.IsActive)
+					if (tradeSession != null && tradeSession.IsActive && !hitInfo.collider.name.Contains("Zone"))
 					{
 						player.E = "Cancel trade";
 						player.BcanE = true;

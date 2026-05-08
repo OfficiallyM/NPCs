@@ -12,6 +12,7 @@ namespace NPCs.Trading
 	internal class TradeZone : MonoBehaviour
 	{
 		private GameObject _zoneVisual;
+		private BoxCollider _trigger;
 		private HashSet<GameObject> _excludedItems = new HashSet<GameObject>();
 		private Dictionary<GameObject, ItemData> _currentItems = new Dictionary<GameObject, ItemData>();
 		private bool _isOpen = false;
@@ -24,23 +25,7 @@ namespace NPCs.Trading
 		private void Awake()
 		{
 			CreateVisual();
-		}
-
-		private void Start()
-		{
-			_excludedItems.Clear();
-			_currentItems.Clear();
-
-			if (!GetComponent<Trader>().NaturalSpawned)
-				return;
-
-			// Check for objects around the trader on spawn to
-			// prevent them being traded for free.
-			foreach (Collider col in GetItemsInZone(true))
-			{
-				if (col.gameObject != null)
-					_excludedItems.Add(col.gameObject);
-			}
+			CreateTrigger();
 		}
 
 		private void CreateVisual()
@@ -63,13 +48,50 @@ namespace NPCs.Trading
 			_zoneVisual.SetActive(false);
 		}
 
+		private void CreateTrigger()
+		{
+			// Trigger sits on a child object at the same position as the visual.
+			GameObject triggerObj = new GameObject("TradeZoneTrigger");
+			triggerObj.transform.SetParent(transform, false);
+			triggerObj.transform.localPosition = new Vector3(2.5f, -0.92f, 2.5f);
+
+			_trigger = triggerObj.AddComponent<BoxCollider>();
+			_trigger.isTrigger = true;
+			_trigger.size = new Vector3(3f, 3f, 3f);
+			_trigger.enabled = false;
+
+			// Forward trigger events to this component.
+			var forwarder = triggerObj.AddComponent<TriggerForwarder>();
+			forwarder.OnEnter += OnTriggerItemEnter;
+			forwarder.OnExit += OnTriggerItemExit;
+		}
+
 		/// <summary>
-		/// Opens the trade zone.
+		/// Opens the trade zone, recording items already present to exclude them.
 		/// </summary>
 		public void Open()
 		{
 			_isOpen = true;
+			_excludedItems.Clear();
 			_currentItems.Clear();
+
+			// One-time snapshot of items already in zone before trade opened.
+			Collider[] existing = Physics.OverlapBox(
+				_trigger.transform.position,
+				_trigger.size / 2f,
+				_trigger.transform.rotation
+			);
+
+			foreach (Collider col in existing)
+			{
+				tosaveitemscript rootSave = col.gameObject.GetComponentInParent<tosaveitemscript>();
+				if (rootSave == null) continue;
+
+				foreach (tosaveitemscript save in rootSave.GetComponentsInChildren<tosaveitemscript>())
+					_excludedItems.Add(save.gameObject);
+			}
+
+			_trigger.enabled = true;
 		}
 
 		/// <summary>
@@ -78,72 +100,61 @@ namespace NPCs.Trading
 		public void Close()
 		{
 			_isOpen = false;
+			_trigger.enabled = false;
+			_excludedItems.Clear();
 			_currentItems.Clear();
 		}
 
 		/// <summary>
 		/// Shows the zone visual.
 		/// </summary>
-		public void Show()
-		{
-			_zoneVisual.SetActive(true);
-		}
+		public void Show() => _zoneVisual.SetActive(true);
 
 		/// <summary>
 		/// Hides the zone visual.
 		/// </summary>
-		public void Hide()
-		{
-			_zoneVisual.SetActive(false);
-		}
+		public void Hide() => _zoneVisual.SetActive(false);
 
-		private void Update()
+		private void OnTriggerItemEnter(Collider other)
 		{
 			if (!_isOpen) return;
 
-			var detected = new Dictionary<GameObject, ItemData>();
-			foreach (Collider col in GetItemsInZone())
+			tosaveitemscript rootSave = other.gameObject.GetComponentInParent<tosaveitemscript>();
+			if (rootSave == null) return;
+
+			bool changed = false;
+			foreach (tosaveitemscript save in rootSave.GetComponentsInChildren<tosaveitemscript>())
 			{
-				GameObject obj = col.gameObject;
+				if (_excludedItems.Contains(save.gameObject)) continue;
+				if (_currentItems.ContainsKey(save.gameObject)) continue;
 
-				if (obj == null) continue;
-				if (_excludedItems.Contains(obj)) continue;
+				ItemData data = ItemRegistry.GetData(save.gameObject);
+				if (data == null || data.Value <= 0f) continue;
 
-				// Only include items with a tosaveitemscript to avoid picking up world geometry.
-				tosaveitemscript save = obj.GetComponentInParent<tosaveitemscript>();
-				if (save == null) continue;
-
-				var data = ItemRegistry.GetData(save.gameObject);
-				if ((data?.Value ?? 0) <= 0f) continue;
-
-				detected[save.gameObject] = data;
+				_currentItems[save.gameObject] = data;
+				changed = true;
 			}
 
-			// Only fire if the offer has actually changed.
-			if (!OfferChanged(detected)) return;
-
-			_currentItems = detected;
-			OnItemsChanged?.Invoke(_currentItems);
+			if (changed)
+				OnItemsChanged?.Invoke(_currentItems);
 		}
 
-		private Collider[] GetItemsInZone(bool extendedZone = false)
+		private void OnTriggerItemExit(Collider other)
 		{
-			Vector3 centre = _zoneVisual.transform.position;
-			Vector3 halfExtents = extendedZone ? new Vector3(30f, 30f, 30f) : new Vector3(1.5f, 1.5f, 1.5f);
-			return Physics.OverlapBox(centre, halfExtents, _zoneVisual.transform.rotation);
-		}
+			if (!_isOpen) return;
 
-		private bool OfferChanged(Dictionary<GameObject, ItemData> detected)
-		{
-			if (detected.Count != _currentItems.Count) return true;
+			tosaveitemscript rootSave = other.gameObject.GetComponentInParent<tosaveitemscript>();
+			if (rootSave == null) return;
 
-			foreach (var key in detected.Keys)
-				if (!_currentItems.ContainsKey(key)) return true;
+			bool changed = false;
+			foreach (tosaveitemscript save in rootSave.GetComponentsInChildren<tosaveitemscript>())
+			{
+				if (_currentItems.Remove(save.gameObject))
+					changed = true;
+			}
 
-			foreach (var key in _currentItems.Keys)
-				if (!detected.ContainsKey(key)) return true;
-
-			return false;
+			if (changed)
+				OnItemsChanged?.Invoke(_currentItems);
 		}
 	}
 }

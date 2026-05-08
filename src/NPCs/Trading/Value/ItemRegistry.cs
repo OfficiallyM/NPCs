@@ -54,8 +54,6 @@ namespace NPCs.Trading.Value
 			if (baseValue == 0)
 				return 0;
 
-			// TODO: Add up value for any parts in a child part slot.
-
 			var tank = obj.GetComponent<tankscript>();
 			if (tank?.F != null)
 			{

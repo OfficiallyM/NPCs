@@ -6,7 +6,6 @@ namespace NPCs.Trading
 	{
 		public TraderPersonality Personality { get; private set; }
 		public TraderInventory Inventory { get; private set; }
-		public bool NaturalSpawned = false;
 
 		protected override void Start()
 		{
