@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
 
-namespace NPCs.Trading
+namespace NPCs.Common
 {
 	/// <summary>
-	/// Forwards Unity trigger events from a child GameObject to the parent TradeZone.
+	/// Forwards Unity trigger events from a child GameObject to the parent.
 	/// Required because MonoBehaviour trigger callbacks must be on the same GameObject as the collider.
 	/// </summary>
 	internal class TriggerForwarder : MonoBehaviour
