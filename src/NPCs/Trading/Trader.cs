@@ -18,7 +18,18 @@ namespace NPCs.Trading
 
 		protected override string GenerateName()
 		{
-			return "Geoff";
+			string[] adjectives = new string[]
+			{
+				"Dodgy", "Shifty", "Crooked", "Sly", "Shady",
+				"Slippery", "Lucky", "Greasy", "Honest"
+			};
+
+			string name = base.GenerateName();
+
+			if (Rng.Next(3) == 0)
+				name = $"{adjectives[Rng.Next(adjectives.Length)]} {name}";
+
+			return name;
 		}
 	}
 }

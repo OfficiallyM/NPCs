@@ -30,8 +30,13 @@ namespace NPCs.Common
 
 		protected virtual string GenerateName()
 		{
-			// TODO: Replace with randomly generated name.
-			return "Dave";
+			string[] names = new string[]
+			{
+				"Dave", "Terry", "Mick", "Gary", "Kev", "Baz", "Steve", "Len", "Pete",
+				"Reg", "Norm", "Brian",
+			};
+
+			return names[Rng.Next(names.Length)];
 		}
 
 		private void SetAppearance()
