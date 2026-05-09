@@ -1,6 +1,6 @@
 ﻿using NPCs.Common;
 using NPCs.Dialogue;
-using NPCs.Dialogue.Core;
+using NPCs.Harmony;
 using NPCs.Trading;
 using NPCs.Trading.Value;
 using NPCs.Utilities;
@@ -23,6 +23,7 @@ namespace NPCs
 		public override bool UseLogger => true;
 		public override bool LoadInDB => true;
 		public override bool UseAssetsFolder => true;
+		public override bool UseHarmony => true;
 
 		internal static NPCs I;
 		internal static bool Debug = false;
@@ -35,7 +36,7 @@ namespace NPCs
 			}
 		}
 
-		private GameObject _debugSelected;
+		internal List<int> traderSpawnQueue = new List<int>();
 
 		public NPCs()
 		{
@@ -92,44 +93,39 @@ namespace NPCs
 				if (session == null) return;
 				session.Begin();
 			});
+
+			RoadGenPlaceOne.HasInitalised = false;
 		}
 
 		public override void Update()
 		{
-			if (Input.GetKeyDown(KeyCode.Comma))
+			// Process trader spawning queue.
+			if (traderSpawnQueue.Count > 0)
 			{
-				_debugSelected = null;
-			}
-
-			if (Input.GetKeyDown(KeyCode.Period))
-			{
-				Physics.Raycast(mainscript.M.player.Cam.transform.position, mainscript.M.player.Cam.transform.forward, out var raycastHit, float.PositiveInfinity, mainscript.M.player.useLayer);
-				if (raycastHit.collider != null && raycastHit.collider.gameObject != null)
+				var processed = new List<int>();
+				foreach (var index in traderSpawnQueue)
 				{
-					GameObject hitGameObject = raycastHit.collider.transform.gameObject;
+					var road = TerrainGenerator.TG.roads[0].roadList[index];
+					var spawnedTrader = GameObject.Instantiate(NPCs.I.GetItem(0), road.nr.position + road.nr.up * 4f + road.nr.right * 7f + -road.nr.forward * 4.5f, Quaternion.LookRotation(-road.nr.right, road.nr.up));
+					// Freeze trader on spawn.
+					var rb = spawnedTrader.GetComponent<Rigidbody>();
+					if (rb != null)
+						rb.isKinematic = true;
 
-					// Recurse upwards to find a tosaveitemscript.
-					tosaveitemscript save = hitGameObject.GetComponentInParent<tosaveitemscript>();
-
-					// Can't find the tosaveitemscript, return early.
-					if (save == null) return;
-
-					_debugSelected = save.gameObject;
-
-					var trader = save.gameObject.GetComponent<Trader>();
-					if (trader != null)
-						Logging.LogDebug($"Trader personality:\nCondition sensitivity: {trader.Personality.ConditionSensitivity}\nMinimum deal threshold: {trader.Personality.MinimumDealThreshold}");
-					return;
+					// Ensure trader can be unfrozen correctly.
+					var traderSave = spawnedTrader.GetComponent<tosaveitemscript>();
+					if (traderSave != null)
+					{
+						traderSave.started = false;
+						traderSave.FInit();
+						traderSave.FStart();
+					}
+					processed.Add(index);
 				}
-				_debugSelected = null;
+
+				foreach (var index in processed)
+					traderSpawnQueue.Remove(index);
 			}
-		}
-
-		public override void OnGUI()
-		{
-			if (_debugSelected == null) return;
-
-			GUI.Button(new Rect(0, 0, 600, 30), $"Selected: {_debugSelected.name} - Value: {ItemRegistry.GetValue(_debugSelected)}g");
 		}
 	}
 }
