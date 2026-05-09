@@ -1,4 +1,5 @@
-﻿using NPCs.Dialogue.Core;
+﻿using NPCs.Common;
+using NPCs.Dialogue.Core;
 using NPCs.Trading;
 using NPCs.Utilities;
 using NPCs.Utilities.UI;
@@ -90,6 +91,9 @@ namespace NPCs.Dialogue
 
 			if (Physics.Raycast(mainscript.M.player.Cam.transform.position, mainscript.M.player.Cam.transform.forward, out var hitInfo, mainscript.M.player.FrayRange, (int)mainscript.M.player.useLayer))
 			{
+				if (hitInfo.transform.GetComponentInParent<NPC>()?.IsDead ?? false)
+					return;
+
 				if (!HasBackgroundConversation)
 				{
 					var runner = hitInfo.transform.GetComponentInParent<ConversationRunner>();

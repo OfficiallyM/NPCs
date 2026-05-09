@@ -1,4 +1,6 @@
 ﻿using NPCs.Dialogue;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -12,20 +14,58 @@ namespace NPCs.Common
 		public static Texture[] Shoes;
 
 		public string NPCName { get; private set; }
+		public event Action OnDeath;
+		public bool IsDead = false;
 
 		protected System.Random Rng { get; private set; }
 		protected ConversationRunner Runner { get; private set; }
 		protected tosaveitemscript Save { get; private set; }
+		protected breakablescript Breakable { get; private set; }
 
 		protected virtual void Start()
 		{
 			Save = GetComponent<tosaveitemscript>();
 			Rng = new System.Random(Save.idInSave);
 			Runner = GetComponent<ConversationRunner>();
+			Breakable = GetComponent<breakablescript>();
 			NPCName = GenerateName();
 			Runner.AddVariable("npcName", NPCName);
+			Runner.Npc = this;
 			SetAppearance();
-			GetComponent<newAiScript>().enabled = false;
+
+			var ai = GetComponent<newAiScript>();
+			// Prevent any default voice clips from playing.
+			ai.Sound_Idle = new AudioClip[0];
+			ai.Sound_Chase = new AudioClip[0];
+			ai.Sound_Notice = new AudioClip[0];
+			ai.Sound_Attack = new AudioClip[0];
+			ai.SIdleList.Clear();
+			ai.SChaseList.Clear();
+			ai.SNoticeList.Clear();
+			ai.SAttackList.Clear();
+
+			// Remove any death sounds that don't fit the NPCs.
+			var deathSounds = new List<AudioClip>(ai.Sound_Death);
+			deathSounds.RemoveAt(8);
+			deathSounds.RemoveAt(6);
+			ai.Sound_Death = deathSounds.ToArray();
+
+			// Stop any potentially running clips.
+			ai.SourceVoice.Stop();
+
+			ai.enabled = false;
+		}
+
+		private void Update()
+		{
+			if (IsDead)
+				return;
+
+			if (Breakable.destroyed)
+			{
+				OnDeath?.Invoke();
+				IsDead = true;
+			}
 		}
 
 		protected virtual string GenerateName()

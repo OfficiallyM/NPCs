@@ -30,6 +30,11 @@ namespace NPCs.Dialogue
 				if (node == null) return;
 				_display.ClearMessageAfterDelay(_runner.ResolveText(node.Text), 0.03f);
 			};
+
+			_runner.Npc.OnDeath += () =>
+			{
+				_display.ClearMessage();
+			};
 		}
 	}
 }

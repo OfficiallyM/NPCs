@@ -58,6 +58,10 @@ namespace NPCs.Trading
 			_tradeZone.Hide();
 
 			_runner.OnConversationEnded += OnConversationEnd;
+			_trader.OnDeath += () =>
+			{
+				Cancel(true);
+			};
 
 			_goldObj = itemdatabase.d.items.FirstOrDefault(i => i != null && i.name == "gold");
 			_silverObj = NPCs.I.GetItem(100);
@@ -90,7 +94,7 @@ namespace NPCs.Trading
 		/// Closes the trade session without completing a trade.
 		/// Returns trader items to inventory and leaves player items in the world.
 		/// </summary>
-		public void Cancel()
+		public void Cancel(bool skipDialogue = false)
 		{
 			if (!IsActive) return;
 
@@ -101,9 +105,12 @@ namespace NPCs.Trading
 			_tradeZone.Hide();
 
 			// Return to dialogue.
+			_runner.ConversationRange = 5f;
+
+			if (skipDialogue)
+				return;
 			ConversationUI.Show();
 			_runner.AdvanceTo("trade_cancelled");
-			_runner.ConversationRange = 5f;
 		}
 
 		public float GetPerceivedValue(TraderItem item)

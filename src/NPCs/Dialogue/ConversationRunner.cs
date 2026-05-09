@@ -1,4 +1,5 @@
-﻿using NPCs.Dialogue.Core;
+﻿using NPCs.Common;
+using NPCs.Dialogue.Core;
 using NPCs.Utilities;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace NPCs.Dialogue
 		public string ConversationId;
 		public float ConversationRange = 5f;
 		public event Action OnBackground;
+		public NPC Npc;
 
 		private Conversation _conversation;
 		private ConversationNode _currentNode;
@@ -188,6 +190,14 @@ namespace NPCs.Dialogue
 				{ "playerName", Environment.UserName }
 			};
 			_playerTransform = mainscript.M.player.transform;
+		}
+
+		private void Start()
+		{
+			Npc.OnDeath += () =>
+			{
+				EndConversation();
+			};
 		}
 
 		private void Update()
