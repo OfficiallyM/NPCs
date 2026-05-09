@@ -115,13 +115,13 @@ namespace NPCs.Trading
 				_plusButtons.Add(plusBtn);
 
 				// Unit value.
-				AddLabelToRow(row, $"{unitValue}g", new Vector2(0.90f, 0f), new Vector2(1f, 1f));
+				AddLabelToRow(row, $"{unitValue}g", new Vector2(0.90f, 0f), new Vector2(1f, 1f), overflow: true);
 			}
 
 			_totalLabel = _display.CreateLabel("Selected: 0g", new RectPercent(50f, 92f, 90f, 6f));
 		}
 
-		private TextMeshProUGUI AddLabelToRow(RectTransform row, string text, Vector2 anchorMin, Vector2 anchorMax)
+		private TextMeshProUGUI AddLabelToRow(RectTransform row, string text, Vector2 anchorMin, Vector2 anchorMax, bool overflow = false)
 		{
 			GameObject obj = new GameObject("Label");
 			obj.transform.SetParent(row, false);
@@ -132,7 +132,7 @@ namespace NPCs.Trading
 			tmp.text = text;
 			tmp.fontSize = 26f;
 			tmp.alignment = TextAlignmentOptions.MidlineLeft;
-			tmp.overflowMode = TextOverflowModes.Ellipsis;
+			tmp.overflowMode = overflow ? TextOverflowModes.Overflow : TextOverflowModes.Ellipsis;
 			tmp.fontSharedMaterial = TMP_Settings.defaultFontAsset.material;
 			tmp.fontSharedMaterial.shader = Shader.Find("TextMeshPro/Distance Field Overlay");
 
