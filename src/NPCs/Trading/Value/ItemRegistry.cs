@@ -59,7 +59,7 @@ namespace NPCs.Trading.Value
 			{
 				foreach (var fluid in tank.F.fluids)
 				{
-					float fluidValue = BaseValues.GetFluidValue(fluid.type) * fluid.amount;
+					float fluidValue = ValueConstants.GetFluidValue(fluid.type) * fluid.amount;
 					baseValue += fluidValue;
 				}
 			}
@@ -89,12 +89,12 @@ namespace NPCs.Trading.Value
 		private static ItemData GetItemData(GameObject item)
 		{
 			// Check for any hardcoded values first.
-			if (BaseValues.SetValues.ContainsKey(item.name))
+			if (ValueConstants.SetValues.ContainsKey(item.name))
 			{
 				return new ItemData
 				{
-					Value = BaseValues.SetValues[item.name].Item1,
-					Category = BaseValues.SetValues[item.name].Item2,
+					Value = ValueConstants.SetValues[item.name].Item1,
+					Category = ValueConstants.SetValues[item.name].Item2,
 					DisplayName = item.name,
 				};
 			}
@@ -105,12 +105,12 @@ namespace NPCs.Trading.Value
 			if (item.GetComponentInChildren<carscript>() != null)
 				return new ItemData
 				{
-					Value = BaseValues.GetChassisValue(item.name),
-					Category = BaseValues.GetChassisCategory(item.name),
+					Value = ValueConstants.GetChassisValue(item.name),
+					Category = ValueConstants.GetChassisCategory(item.name),
 					DisplayName = item.name,
 				};
 			if (item.GetComponent<utanfutoscript>() != null)
-				return new ItemData { Value = BaseValues.Trailer, Category = ItemCategory.Trailer, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Trailer, Category = ItemCategory.Trailer, DisplayName = item.name };
 
 			// Tank size bonus shared across engines, radiators, and standalone tanks.
 			var tank = item.GetComponent<tankscript>();
@@ -119,48 +119,48 @@ namespace NPCs.Trading.Value
 				tankValue = TankCapacityValue(tank.F.maxC);
 
 			if (item.GetComponent<enginescript>() != null)
-				return new ItemData { Value = BaseValues.Engine + tankValue, Category = ItemCategory.Engine, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Engine + tankValue, Category = ItemCategory.Engine, DisplayName = item.name };
 
 			if (item.GetComponent<coolantTankscript>() != null)
-				return new ItemData { Value = BaseValues.Radiator + tankValue, Category = ItemCategory.Radiator, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Radiator + tankValue, Category = ItemCategory.Radiator, DisplayName = item.name };
 
 			if (tank != null)
-				return new ItemData { Value = BaseValues.Tank + tankValue, Category = ItemCategory.Tank, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Tank + tankValue, Category = ItemCategory.Tank, DisplayName = item.name };
 
 			if (item.GetComponent<wheelscript>() != null)
-				return new ItemData { Value = BaseValues.Wheel, Category = ItemCategory.Wheel, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Wheel, Category = ItemCategory.Wheel, DisplayName = item.name };
 
 			if (item.GetComponent<gumiscript>() != null)
-				return new ItemData { Value = BaseValues.Tire, Category = ItemCategory.Tire, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Tire, Category = ItemCategory.Tire, DisplayName = item.name };
 
 			if (item.GetComponent<meterscript>() != null)
-				return new ItemData { Value = BaseValues.Meter, Category = ItemCategory.Meter, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Meter, Category = ItemCategory.Meter, DisplayName = item.name };
 
 			if (item.GetComponent<headlightscript>() != null)
-				return new ItemData { Value = BaseValues.Light, Category = ItemCategory.Light, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Light, Category = ItemCategory.Light, DisplayName = item.name };
 
 			if (item.GetComponent<partscript>() != null)
-				return new ItemData { Value = BaseValues.Part, Category = ItemCategory.Part, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Part, Category = ItemCategory.Part, DisplayName = item.name };
 
 			if (item.GetComponent<weaponscript>() != null)
-				return new ItemData { Value = BaseValues.Gun, Category = ItemCategory.Gun, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Gun, Category = ItemCategory.Gun, DisplayName = item.name };
 
 			if (item.GetComponent<meleeweaponscript>() != null)
-				return new ItemData { Value = BaseValues.Melee, Category = ItemCategory.Melee, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Melee, Category = ItemCategory.Melee, DisplayName = item.name };
 
 			if (item.GetComponent<drotkefescript>() != null || item.GetComponent<spricniscript>() != null)
-				return new ItemData { Value = BaseValues.Cleaning, Category = ItemCategory.Cleaning, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Cleaning, Category = ItemCategory.Cleaning, DisplayName = item.name };
 
 			if (item.GetComponent<ediblescript>() != null)
-				return new ItemData { Value = BaseValues.Food, Category = ItemCategory.Food, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Food, Category = ItemCategory.Food, DisplayName = item.name };
 
 			if (item.GetComponent<wearable>() != null)
-				return new ItemData { Value = BaseValues.Wearable, Category = ItemCategory.Wearable, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Wearable, Category = ItemCategory.Wearable, DisplayName = item.name };
 
 			if (item.GetComponent<usablescript>() != null)
-				return new ItemData { Value = BaseValues.Usable, Category = ItemCategory.Usable, DisplayName = item.name };
+				return new ItemData { Value = ValueConstants.Usable, Category = ItemCategory.Usable, DisplayName = item.name };
 
-			return new ItemData { Value = BaseValues.Fallback, Category = ItemCategory.Unknown, DisplayName = item.name };
+			return new ItemData { Value = ValueConstants.Fallback, Category = ItemCategory.Unknown, DisplayName = item.name };
 		}
 
 		private static float TankCapacityValue(float litres, float maxBonus = 1.5f)

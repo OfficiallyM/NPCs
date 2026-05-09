@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NPCs.Trading.Value
 {
-	public static class BaseValues
+	public static class ValueConstants
 	{
 		public const float Fallback = 0.5f;
 
