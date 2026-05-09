@@ -13,6 +13,7 @@ namespace NPCs.Dialogue
 	{
 		public string ConversationId;
 		public float ConversationRange = 5f;
+		public event Action OnBackground;
 
 		private Conversation _conversation;
 		private ConversationNode _currentNode;
@@ -115,6 +116,7 @@ namespace NPCs.Dialogue
 			if (nodeId == "@background")
 			{
 				ConversationUI.Hide();
+				OnBackground?.Invoke();
 				return;
 			}
 

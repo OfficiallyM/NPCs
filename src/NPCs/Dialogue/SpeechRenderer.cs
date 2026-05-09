@@ -1,4 +1,5 @@
 ﻿using NPCs.Common;
+using NPCs.Dialogue.Core;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,6 +23,13 @@ namespace NPCs.Dialogue
 				new WorldspaceDisplay.Message(new List<string>() { _runner.ResolveText(node.Text) })
 			);
 			_runner.OnConversationEnded += _display.ClearMessage;
+
+			_runner.OnBackground += () =>
+			{
+				ConversationNode node = _runner.CurrentNode;
+				if (node == null) return;
+				_display.ClearMessageAfterDelay(_runner.ResolveText(node.Text), 0.03f);
+			};
 		}
 	}
 }

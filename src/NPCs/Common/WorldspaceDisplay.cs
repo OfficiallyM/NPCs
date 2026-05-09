@@ -148,6 +148,16 @@ namespace NPCs.Common
 			_displayRoutine = StartCoroutine(ClearRoutine());
 		}
 
+		public void ClearMessageAfterDelay(string fullText, float typewriterSpeed)
+		{
+			if (_fadeRoutine != null)
+				StopCoroutine(_fadeRoutine);
+
+			float delay = Mathf.Clamp(fullText.Length * typewriterSpeed, 3f, 10f);
+			StartCoroutine(DelayedClearRoutine(delay));
+		}
+
+
 		private void ResizeCanvasForContent(List<string> rows, float padding = 20f)
 		{
 			float totalWidth = 0f;
@@ -229,6 +239,12 @@ namespace NPCs.Common
 
 			_background.color = target;
 			_fadeRoutine = null;
+		}
+
+		private IEnumerator DelayedClearRoutine(float delay)
+		{
+			yield return new WaitForSeconds(delay);
+			ClearMessage();
 		}
 	}
 }
