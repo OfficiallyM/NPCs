@@ -54,6 +54,7 @@ namespace NPCs.Trading
 			GameObject triggerObj = new GameObject("TradeZoneTrigger");
 			triggerObj.transform.SetParent(transform, false);
 			triggerObj.transform.localPosition = new Vector3(2.5f, -0.92f, 2.5f);
+			triggerObj.layer = 2;
 
 			_trigger = triggerObj.AddComponent<BoxCollider>();
 			_trigger.isTrigger = true;

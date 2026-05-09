@@ -61,7 +61,6 @@ namespace NPCs.Trading
 
 			_goldObj = itemdatabase.d.items.FirstOrDefault(i => i != null && i.name == "gold");
 			_silverObj = NPCs.I.GetItem(100);
-			_spawnPos = transform.position + new Vector3(-2.5f, 0, 2.5f);
 		}
 
 		/// <summary>
@@ -81,6 +80,8 @@ namespace NPCs.Trading
 			_playerBillboard.Show();
 			_tradeZone.Open();
 			_tradeZone.Show();
+
+			_spawnPos = transform.position + new Vector3(-2.5f, 0, 2.5f);
 
 			_runner.ConversationRange = 15f;
 		}
