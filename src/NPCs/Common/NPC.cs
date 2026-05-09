@@ -1,5 +1,6 @@
 ﻿using NPCs.Dialogue;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -32,6 +33,7 @@ namespace NPCs.Common
 			Runner.AddVariable("npcName", NPCName);
 			Runner.Npc = this;
 			SetAppearance();
+			OnDeath += () => StartCoroutine(ResurrectionRoutine());
 
 			var ai = GetComponent<newAiScript>();
 			// Prevent any default voice clips from playing.
@@ -111,6 +113,25 @@ namespace NPCs.Common
 			eyes.material.SetTexture("_MainTex", eyeTexture);
 			clothes.material.SetTexture("_MainTex", outfitTexture);
 			shoes.material.SetTexture("_MainTex", shoesTexture);
+		}
+
+		private IEnumerator ResurrectionRoutine()
+		{
+			// 1 in 3 chance of resurrection.
+			if (Rng.Next(3) != 0)
+				yield break;
+
+			yield return new WaitForSeconds(3f + Rng.Next(1, 6));
+
+			Instantiate(
+				itemdatabase.d.gmunkas01,
+				transform.position,
+				transform.rotation
+			);
+
+			foreach (var save in GetComponentsInChildren<tosaveitemscript>())
+				save.removeFromMemory = true;
+			Destroy(gameObject);
 		}
 	}
 }
