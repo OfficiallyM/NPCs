@@ -34,9 +34,9 @@ namespace NPCs.Trading.Value
 			if (obj == null)
 				return null;
 
-			// TODO: Doesn't work for starter house items.
 			string name = obj.name.Replace("(Clone)", "").Trim();
 
+			// Try an exact match first.
 			foreach (var entry in _registry)
 			{
 				if (entry.Key.name == name)
@@ -44,6 +44,17 @@ namespace NPCs.Trading.Value
 					return entry.Value;
 				}
 			}
+
+			// Fall back to contains match stripping bracketed suffixes, for starter house items
+			// which have random numbers in brackets instead of the standard (Clone) suffix.
+			string stripped = System.Text.RegularExpressions.Regex.Replace(name, @"\(.*?\)", "").Trim();
+
+			foreach (var entry in _registry)
+			{
+				if (entry.Key.name == stripped)
+					return entry.Value;
+			}
+
 			return null;
 		}
 
