@@ -37,6 +37,9 @@ namespace NPCs.Trading.Value
 		public const float Blood = 0.35f;
 		public const float Diesel = 0.225f;
 
+		// Fees.
+		public const float ColourMatchFee = 2f;
+
 		// Hardcoded values.
 		public static Dictionary<string, (float, ItemCategory)> SetValues = new Dictionary<string, (float, ItemCategory)>()
 		{

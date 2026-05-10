@@ -274,6 +274,13 @@ namespace NPCs.Trading
 				TraderItem traderItem = entry.Key;
 				int quantity = entry.Value.Quantity;
 
+				// Use car colour if colour match is active and this item has a colour, otherwise use stored colour
+				// Falls back to white if the colour can't be resolved.
+				Color itemColour = (_traderBillboard.ColourMatchActive && traderItem.Color.HasValue
+					? _traderBillboard.CachedCarColour
+					: traderItem.Color) 
+					?? Color.white;
+
 				for (int i = 0; i < quantity; i++)
 				{
 					var spawned = GameObject.Instantiate(traderItem.Prefab);
@@ -283,7 +290,7 @@ namespace NPCs.Trading
 					// Apply stored condition and colour.
 					partconditionscript condition = spawned.GetComponentInChildren<partconditionscript>();
 					if (condition != null && traderItem.Condition.HasValue)
-						condition.StartRandom2(traderItem.Color ?? Color.white, 0, 4, traderItem.Condition.Value);
+						condition.StartRandom2(itemColour, 0, 4, traderItem.Condition.Value);
 				}
 
 				_trader.Inventory.Remove(_traderBillboard.SelectedItems.Keys.ToList().IndexOf(traderItem), quantity);

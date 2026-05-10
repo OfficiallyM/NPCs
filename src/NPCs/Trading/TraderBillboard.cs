@@ -1,5 +1,6 @@
 ﻿using NPCs.Common;
 using NPCs.Trading.Core;
+using NPCs.Trading.Value;
 using NPCs.Utilities;
 using System;
 using System.Collections.Generic;
@@ -29,11 +30,23 @@ namespace NPCs.Trading
 
 		private float _totalSelected = 0f;
 
+		private Image _colourPreview;
+		private TextMeshProUGUI _colourMatchToggleLabel;
+		private bool _colourMatchActive = false;
+		private GameObject _colourMatchRow;
+
+		public Color? CachedCarColour;
+
 		/// <summary>
 		/// Items currently selected by the player, keyed by prefab with quantity and total value.
 		/// </summary>
 		public Dictionary<TraderItem, (int Quantity, float TotalValue)> SelectedItems { get; private set; }
 			= new Dictionary<TraderItem, (int, float)>();
+
+		/// <summary>
+		/// Whether the colour match service is currently active.
+		/// </summary>
+		public bool ColourMatchActive => _colourMatchActive;
 
 		/// <summary>
 		/// Fired when the selection changes.
@@ -80,6 +93,7 @@ namespace NPCs.Trading
 			_plusButtons.Clear();
 			SelectedItems.Clear();
 			_totalSelected = 0f;
+			_colourMatchActive = false;
 
 			_display.CreateLabel("Their offer", new RectPercent(50f, 5f, 90f, 8f));
 
@@ -118,7 +132,8 @@ namespace NPCs.Trading
 				AddLabelToRow(row, $"{unitValue}g", new Vector2(0.90f, 0f), new Vector2(1f, 1f), overflow: true);
 			}
 
-			_totalLabel = _display.CreateLabel("Selected: 0g", new RectPercent(50f, 92f, 90f, 6f));
+			_totalLabel = _display.CreateLabel("Selected: 0g", new RectPercent(50f, 85f, 90f, 6f));
+			BuildColourMatchRow();
 		}
 
 		private TextMeshProUGUI AddLabelToRow(RectTransform row, string text, Vector2 anchorMin, Vector2 anchorMax, bool overflow = false)
@@ -211,12 +226,96 @@ namespace NPCs.Trading
 
 			UpdateTotalLabel();
 			OnSelectionChanged?.Invoke();
+
+			// Update colour match service.
+			bool anyColoured = SelectedItems.Keys.Any(item => item.Color.HasValue);
+			_colourMatchRow.SetActive(anyColoured && CachedCarColour.HasValue);
+			if (!anyColoured)
+			{
+				_colourMatchActive = false;
+				// Reset toggle label.
+				if (_colourMatchToggleLabel != null)
+					_colourMatchToggleLabel.text = "No";
+			}
 		}
 
 		private void UpdateTotalLabel()
 		{
-			if (_totalLabel != null)
-				_totalLabel.text = $"Selected: {Maths.RoundToNearestHalf(_totalSelected)}g";
+			if (_totalLabel == null) return;
+			float total = _totalSelected + (_colourMatchActive ? ValueConstants.ColourMatchFee : 0f);
+			_totalLabel.text = $"Selected: {Maths.RoundToNearestHalf(total)}g";
+		}
+
+		private void CacheCarColour()
+		{
+			CachedCarColour = null;
+			var car = mainscript.M.player?.Car ?? mainscript.M.player?.lastCar;
+			if (car == null) return;
+			var condition = car.GetComponentInChildren<partconditionscript>();
+			if (condition == null) return;
+			var color = condition.color;
+			color.a = 1f;
+			CachedCarColour = color;
+		}
+
+		private void BuildColourMatchRow()
+		{
+			CacheCarColour();
+
+			RectTransform rt = _display.CreateContainer(new RectPercent(50f, 93f, 90f, 6f));
+			_colourMatchRow = rt.gameObject;
+
+			// Colour preview square — left side of container.
+			GameObject previewObj = new GameObject("ColourPreview");
+			previewObj.transform.SetParent(rt, false);
+			_display.RegisterLabel(previewObj);
+
+			_colourPreview = previewObj.AddComponent<Image>();
+			_colourPreview.material = new Material(Shader.Find("UI/Default"));
+			_colourPreview.color = CachedCarColour ?? Color.grey;
+
+			RectTransform previewRect = previewObj.GetComponent<RectTransform>();
+			previewRect.anchorMin = new Vector2(0f, 0.1f);
+			previewRect.anchorMax = new Vector2(0.06f, 0.9f);
+			previewRect.offsetMin = previewRect.offsetMax = Vector2.zero;
+
+			//RectTransform previewRect = previewObj.GetComponent<RectTransform>();
+			//previewRect.anchorMin = previewRect.anchorMax = previewRect.pivot = new Vector2(0f, 0.5f);
+			//previewRect.sizeDelta = new Vector2(30f, 30f);
+			//previewRect.anchoredPosition = new Vector2(15f, 0f);
+
+			// Label.
+			GameObject labelObj = new GameObject("ColourMatchLabel");
+			labelObj.transform.SetParent(rt, false);
+			labelObj.transform.localPosition = new Vector3(0f, 0f, -0.1f);
+			_display.RegisterLabel(labelObj);
+
+			var label = labelObj.AddComponent<TextMeshProUGUI>();
+			label.text = $"Colour match service - {ValueConstants.ColourMatchFee}g";
+			label.fontSize = 24f;
+			label.alignment = TextAlignmentOptions.MidlineLeft;
+			label.fontSharedMaterial = TMP_Settings.defaultFontAsset.material;
+			label.fontSharedMaterial.shader = Shader.Find("TextMeshPro/Distance Field Overlay");
+
+			RectTransform labelRect = labelObj.GetComponent<RectTransform>();
+			labelRect.anchorMin = new Vector2(0.08f, 0f);
+			labelRect.anchorMax = new Vector2(0.72f, 1f);
+			labelRect.offsetMin = labelRect.offsetMax = Vector2.zero;
+
+			// Toggle button.
+			var button = AddButtonToRow(rt, "No", "Toggle colour match", new Vector2(0.74f, 0.1f), new Vector2(0.95f, 0.9f), ToggleColourMatch);
+			_colourMatchToggleLabel = button.GetComponentInChildren<TextMeshProUGUI>();
+
+			_colourMatchRow.SetActive(false);
+		}
+
+		private void ToggleColourMatch()
+		{
+			_colourMatchActive = !_colourMatchActive;
+			if (_colourMatchToggleLabel != null)
+				_colourMatchToggleLabel.text = _colourMatchActive ? "Yes" : "No";
+			UpdateTotalLabel();
+			OnSelectionChanged?.Invoke();
 		}
 	}
 }

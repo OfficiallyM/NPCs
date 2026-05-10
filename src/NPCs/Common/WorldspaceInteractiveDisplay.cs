@@ -28,6 +28,8 @@ namespace NPCs.Common
 		public void SetPosition(Vector3 position) => _position = position;
 		public void SetSize(Vector2 size) => _size = size;
 		public void SetInteractDistance(float distance) => _interactDistance = distance;
+		public Canvas GetCanvas() => _canvas;
+		public Vector2 GetSize() => _size;
 
 		public void Init()
 		{
@@ -279,6 +281,16 @@ namespace NPCs.Common
 		public void RegisterLabel(GameObject label)
 		{
 			_labels.Add(label);
+		}
+
+		public RectTransform CreateContainer(RectPercent rect)
+		{
+			GameObject obj = new GameObject("Container");
+			obj.transform.SetParent(_canvas.transform, false);
+			RectTransform rt = obj.AddComponent<RectTransform>();
+			SetRect(rt, rect);
+			_labels.Add(obj);
+			return rt;
 		}
 	}
 }
