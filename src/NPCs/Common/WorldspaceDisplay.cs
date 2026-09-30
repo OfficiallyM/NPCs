@@ -26,6 +26,7 @@ namespace NPCs.Common
 		private RectTransform _canvasRect;
 		private Camera _cam;
 		private Image _background;
+		private readonly Vector3[] _corners = new Vector3[4];
 
 		private Color _bgVisible = new Color(0f, 0f, 0f, 0.6f);
 		private Color _bgHidden = new Color(0f, 0f, 0f, 0f);
@@ -36,6 +37,13 @@ namespace NPCs.Common
 		private float _maxWidth = 250;
 
 		private bool _isReady = false;
+		private bool _evaluateOnScreen = false;
+
+		/// <summary>
+		/// Whether the whole display was inside the camera's view when the current message was rendered.
+		/// Assumed true until the first message has been laid out.
+		/// </summary>
+		public bool IsOnScreen { get; private set; } = true;
 		private Message _queuedMessage;
 
 		private Coroutine _displayRoutine;
@@ -110,6 +118,32 @@ namespace NPCs.Common
 
 			// Always face camera.
 			_canvas.transform.rotation = Quaternion.LookRotation(_canvas.transform.position - _cam.transform.position);
+
+			// Only decide once per message, after it has been sized and turned to face the camera.
+			// Checking every frame made the result flicker when the NPC's idle sway moved the box across the screen edge.
+			if (_evaluateOnScreen)
+			{
+				IsOnScreen = CheckOnScreen();
+				_evaluateOnScreen = false;
+			}
+		}
+
+		private bool CheckOnScreen()
+		{
+			// A little margin so text touching the screen edge doesn't count as readable.
+			const float MARGIN = 0.02f;
+
+			_canvasRect.GetWorldCorners(_corners);
+			foreach (Vector3 corner in _corners)
+			{
+				Vector3 viewport = _cam.WorldToViewportPoint(corner);
+				if (viewport.z <= 0f
+					|| viewport.x < MARGIN || viewport.x > 1f - MARGIN
+					|| viewport.y < MARGIN || viewport.y > 1f - MARGIN)
+					return false;
+			}
+
+			return true;
 		}
 
 		public void SetPosition(Vector3 pos) => _position = pos;
@@ -133,6 +167,7 @@ namespace NPCs.Common
 			_text.text = string.Empty;
 
 			ResizeCanvasForContent(message.Rows);
+			_evaluateOnScreen = true;
 			_displayRoutine = StartCoroutine(DisplayRoutine(message.Rows, message.TypewriterSpeed));
 		}
 

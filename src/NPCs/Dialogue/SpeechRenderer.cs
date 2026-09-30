@@ -10,6 +10,11 @@ namespace NPCs.Dialogue
 		private ConversationRunner _runner;
 		private WorldspaceDisplay _display;
 
+		/// <summary>
+		/// Whether the player can currently see the speech box.
+		/// </summary>
+		public bool IsVisibleToPlayer => _display != null && _display.IsOnScreen;
+
 		public void Start()
 		{
 			_runner = GetComponent<ConversationRunner>();

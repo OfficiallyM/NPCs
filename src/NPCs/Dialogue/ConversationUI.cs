@@ -14,6 +14,7 @@ namespace NPCs.Dialogue
 	internal class ConversationUI : MonoBehaviour
 	{
 		private static ConversationRunner _activeRunner;
+		private static SpeechRenderer _activeSpeech;
 		private static bool _uiEnabled;
 		private Vector2 _scroll;
 
@@ -30,11 +31,10 @@ namespace NPCs.Dialogue
 		public static void SetActiveRunner(ConversationRunner runner)
 		{
 			_activeRunner = runner;
+			_activeSpeech = runner.GetComponent<SpeechRenderer>();
 			SetUIState(true);
 
-			// TODO:
-			// - Make NPC step back if player is too close.
-			// - Make NPC look at player when speaking to them.
+			// TODO: Make NPC step back if player is too close.
 		}
 
 		/// <summary>
@@ -43,6 +43,7 @@ namespace NPCs.Dialogue
 		public static void ClearActiveRunner()
 		{
 			_activeRunner = null;
+			_activeSpeech = null;
 			SetUIState(false);
 		}
 
@@ -142,7 +143,7 @@ namespace NPCs.Dialogue
 			if ((!HasActiveConversation || HasBackgroundConversation) && Animator.IsIdle("mainUI")) return;
 
 			GUILayout.BeginArea(animatedRect, GUIContent.none, "box");
-			GUILayout.BeginHorizontal();
+			GUILayout.BeginHorizontal("box");
 			GUILayout.Space(5f);
 			GUILayout.Label(_activeRunner?.GetVariable("npcName") ?? "Stranger", "LabelHeader", GUILayout.ExpandWidth(false));
 			GUILayout.EndHorizontal();
@@ -153,6 +154,13 @@ namespace NPCs.Dialogue
 			_scroll = GUILayout.BeginScrollView(_scroll);
 			if (node != null)
 			{
+				// Fall back to showing the NPC's line here when the player can't see the speech box above their head.
+				if (_activeSpeech != null && !_activeSpeech.IsVisibleToPlayer)
+				{
+					GUILayout.Label(_activeRunner.ResolveText(node.Text), "LabelSubHeader");
+					GUILayout.Space(5f);
+				}
+
 				if (hasOptions)
 				{
 					for (int i = 0; i < node.Options.Count; i++)
