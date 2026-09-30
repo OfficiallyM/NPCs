@@ -17,7 +17,7 @@ namespace NPCs
 		// Mod meta stuff.
 		private string _version = "0.0.1";
 		public override string ID => "M_NPCs";
-		public override string Name => "Friendly NPCs";
+		public override string Name => "NPCs";
 		public override string Author => "M-";
 		public override string Version => _version;
 		public override bool UseLogger => true;
@@ -58,7 +58,7 @@ namespace NPCs
 			var silver = bundle.LoadAsset<GameObject>("silver");
 			bundle.Unload(false);
 
-			// NPC item IDs: 0 - 100.
+			// NPC item IDs: 0 - 1000.
 			RegisterItem(itemdatabase.d.gmunkas01, 0, "Trader")
 				.WithRigidbody(90, 5)
 				.AddComponent<Trader>()
@@ -67,8 +67,8 @@ namespace NPCs
 				.AddComponent<SpeechRenderer>()
 				.Register();
 
-			// Other item IDs: 100+.
-			RegisterItem(silver, 100)
+			// Other item IDs: 1000+.
+			RegisterItem(silver, 1000)
 				.WithRigidbody(15.5f)
 				.AsPickupable(new PickupableOptions() { Attachable = true, CanInventory = true })
 				.SpawnInBox(maxPerBox: 6)
