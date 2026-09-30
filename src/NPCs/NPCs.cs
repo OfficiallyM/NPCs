@@ -62,9 +62,6 @@ namespace NPCs
 			RegisterItem(itemdatabase.d.gmunkas01, 0, "Trader")
 				.WithRigidbody(90, 5)
 				.AddComponent<Trader>()
-				.AddComponent<ConversationRunner>()
-				.AddComponent<TradeSession>()
-				.AddComponent<SpeechRenderer>()
 				.Register();
 
 			// Other item IDs: 1000+.
@@ -74,10 +71,6 @@ namespace NPCs
 				.SpawnInBox(maxPerBox: 6)
 				.SpawnAt(6, itemdatabase.d.ggold)
 				.Register();
-
-			var trader = GetItem(0);
-			Components.StripComponents(trader);
-			trader.GetComponent<ConversationRunner>().ConversationId = "trader_test";
 
 			if (mainscript.M.player.GetComponent<ConversationUI>() == null)
 				mainscript.M.player.gameObject.AddComponent<ConversationUI>();

@@ -1,4 +1,5 @@
 ﻿using NPCs.Common;
+using NPCs.Utilities;
 
 namespace NPCs.Trading
 {
@@ -6,6 +7,13 @@ namespace NPCs.Trading
 	{
 		public TraderPersonality Personality { get; private set; }
 		public TraderInventory Inventory { get; private set; }
+
+		protected override void Awake()
+		{
+			base.Awake();
+			Runner.ConversationId = "trader_test";
+			gameObject.AddComponent<TradeSession>();
+		}
 
 		protected override void Start()
 		{

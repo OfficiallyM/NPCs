@@ -1,4 +1,6 @@
 ﻿using NPCs.Dialogue;
+using NPCs.Trading;
+using NPCs.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,6 +25,16 @@ namespace NPCs.Common
 		protected tosaveitemscript Save { get; private set; }
 		protected breakablescript Breakable { get; private set; }
 
+		protected virtual void Awake()
+		{
+			Runner = gameObject.AddComponent<ConversationRunner>();
+			Runner.Npc = this;
+			gameObject.AddComponent<SpeechRenderer>();
+
+			// Remove any mod components that aren't ours from the NPCs.
+			Components.StripComponents(gameObject);
+		}
+
 		protected virtual void Start()
 		{
 			Save = GetComponent<tosaveitemscript>();
@@ -31,7 +43,6 @@ namespace NPCs.Common
 			Breakable = GetComponent<breakablescript>();
 			NPCName = GenerateName();
 			Runner.AddVariable("npcName", NPCName);
-			Runner.Npc = this;
 			SetAppearance();
 			OnDeath += () => StartCoroutine(ResurrectionRoutine());
 
