@@ -36,7 +36,7 @@ namespace NPCs
 			}
 		}
 
-		internal List<int> traderSpawnQueue = new List<int>();
+		internal List<int> TraderSpawnQueue = new List<int>();
 
 		public NPCs()
 		{
@@ -100,10 +100,10 @@ namespace NPCs
 		public override void Update()
 		{
 			// Process trader spawning queue.
-			if (traderSpawnQueue.Count > 0)
+			if (TraderSpawnQueue.Count > 0)
 			{
 				var processed = new List<int>();
-				foreach (var index in traderSpawnQueue)
+				foreach (var index in TraderSpawnQueue)
 				{
 					var road = TerrainGenerator.TG.roads[0].roadList[index];
 					var spawnedTrader = GameObject.Instantiate(NPCs.I.GetItem(0), road.nr.position + road.nr.up * 4f + road.nr.right * 7f + -road.nr.forward * 4.5f, Quaternion.LookRotation(-road.nr.right, road.nr.up));
@@ -124,7 +124,7 @@ namespace NPCs
 				}
 
 				foreach (var index in processed)
-					traderSpawnQueue.Remove(index);
+					TraderSpawnQueue.Remove(index);
 			}
 		}
 	}

@@ -25,7 +25,7 @@ namespace NPCs.Harmony
 				return;
 
 			var road = __instance.roadList[pi];
-			NPCs.I.traderSpawnQueue.Add(pi);
+			NPCs.I.TraderSpawnQueue.Add(pi);
 			_nextSpawnIndex = pi + Random.Range(MIN_SPAWN, MAX_SPAWN);
 		}
 	}
