@@ -1,4 +1,5 @@
-﻿using NPCs.Dialogue;
+﻿using NPCs.AI;
+using NPCs.Dialogue;
 using NPCs.Trading;
 using NPCs.Utilities;
 using System;
@@ -17,6 +18,7 @@ namespace NPCs.Common
 		public static Texture[] Shoes;
 
 		public string NPCName { get; private set; }
+		public NPCAi Ai { get; private set; }
 		public event Action OnDeath;
 		public bool IsDead = false;
 
@@ -27,6 +29,8 @@ namespace NPCs.Common
 
 		protected virtual void Awake()
 		{
+			Ai = CreateAi();
+
 			Runner = gameObject.AddComponent<ConversationRunner>();
 			Runner.Npc = this;
 			gameObject.AddComponent<SpeechRenderer>();
@@ -91,6 +95,12 @@ namespace NPCs.Common
 
 			return names[Rng.Next(names.Length)];
 		}
+
+		/// <summary>
+		/// Override to provide an NPC with their own behaviour.
+		/// </summary>
+		/// <returns>NPCAi instance to be added to the NPC</returns>
+		protected virtual NPCAi CreateAi() => gameObject.AddComponent<NPCAi>();
 
 		private void SetAppearance()
 		{

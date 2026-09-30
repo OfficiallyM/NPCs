@@ -1,5 +1,5 @@
-﻿using NPCs.Common;
-using NPCs.Utilities;
+﻿using NPCs.AI;
+using NPCs.Common;
 
 namespace NPCs.Trading
 {
@@ -23,6 +23,8 @@ namespace NPCs.Trading
 			Inventory.Generate();
 			GetComponent<TradeSession>().Init();
 		}
+
+		protected override NPCAi CreateAi() => gameObject.AddComponent<TraderAi>();
 
 		protected override string GenerateName()
 		{

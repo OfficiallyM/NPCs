@@ -1,0 +1,119 @@
+﻿using NPCs.AI.States;
+using NPCs.Common;
+using NPCs.Dialogue;
+using UnityEngine;
+
+namespace NPCs.AI
+{
+	public class NPCAi : MonoBehaviour
+	{
+		private const float LOOK_HEIGHT = 1.6f;
+		private const float LOOK_DISTANCE = 5f;
+
+		private NPCState _state;
+		private ConversationRunner _runner;
+		private newAiScript _vanilla;
+		private bool _turningBody;
+
+		// How close the player needs to get before the NPC reacts.
+		public virtual float NoticeRange => 12f;
+
+		// Larger than the notice range so the NPC doesn't flicker between states at the boundary.
+		public virtual float LoseRange => 16f;
+
+		// Degrees per second.
+		public virtual float TurnSpeed => 90f;
+
+		// How far the head can turn before the body starts following.
+		// Kept under the animator's look-at clamp (roughly 90 degrees) so the head never reaches its hard limit.
+		public virtual float BodyTurnAngle => 70f;
+
+		// The body stops turning once the target is within this angle of straight ahead.
+		public virtual float BodySettleAngle => 10f;
+
+		public bool InConversation => _runner != null && _runner.IsActive;
+
+		public float DistanceToPlayer => Vector3.Distance(transform.position, mainscript.M.player.transform.position);
+
+		private void Start()
+		{
+			_runner = GetComponent<ConversationRunner>();
+			_vanilla = GetComponent<newAiScript>();
+
+			// The vanilla AI is disabled, so its Start never unparents or resets the look target.
+			// The animator reads from it every frame, so make sure one exists.
+			if (_vanilla.target == null)
+			{
+				var target = new GameObject("AI_Target").transform;
+				target.SetParent(transform, false);
+				_vanilla.target = target;
+			}
+
+			GetComponent<NPC>().OnDeath += () => enabled = false;
+
+			Rest();
+
+			// The animator's look position starts at the world origin, so snap it to avoid an initial head swing.
+			_vanilla.anim.lookTarget = _vanilla.target.position;
+		}
+
+		private void Update()
+		{
+			_state?.Tick();
+		}
+
+		public void SetState(NPCState next)
+		{
+			_state?.Exit();
+			_turningBody = false;
+			_state = next;
+			_state?.Enter();
+		}
+
+		// Go back to whatever this NPC type does when nothing is happening.
+		public virtual void Rest() => SetState(new IdleState(this));
+
+		// Called when the NPC notices the player.
+		public virtual void Engage() => SetState(new EngagedState(this));
+
+		// The vanilla animator lerps its head IK towards this point, so we only need to move it.
+		public void LookAt(Vector3 point)
+		{
+			_vanilla.target.position = point;
+		}
+
+		public void LookAhead()
+		{
+			LookAt(transform.position + Vector3.up * LOOK_HEIGHT + transform.forward * LOOK_DISTANCE);
+		}
+
+		// The head leads and the body only follows once the head has turned as far as it comfortably can.
+		public void FaceTowards(Vector3 point)
+		{
+			// Use where the head is actually looking rather than where it's heading, so the body reacts to the delayed head movement.
+			float headYaw = Mathf.Abs(YawTo(_vanilla.anim.lookTarget));
+
+			if (!_turningBody && headYaw > BodyTurnAngle)
+				_turningBody = true;
+			else if (_turningBody && Mathf.Abs(YawTo(point)) <= BodySettleAngle)
+				_turningBody = false;
+
+			if (!_turningBody)
+				return;
+
+			Vector3 flat = Vector3.ProjectOnPlane(point - transform.position, Vector3.up);
+			if (flat.sqrMagnitude < 0.0001f)
+				return;
+
+			Quaternion target = Quaternion.LookRotation(flat, Vector3.up);
+			transform.rotation = Quaternion.RotateTowards(transform.rotation, target, TurnSpeed * Time.deltaTime);
+		}
+
+		private float YawTo(Vector3 point)
+		{
+			Vector3 flat = Vector3.ProjectOnPlane(point - transform.position, Vector3.up);
+			return Vector3.SignedAngle(transform.forward, flat, Vector3.up);
+		}
+
+	}
+}
