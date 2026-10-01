@@ -64,15 +64,42 @@ namespace NPCs.Trading
 
 			var scrollList = _display.CreateScrollList(15f, 85f, 7, 8f);
 
+			// Group identical items into a single row. The key is the name as shown (which includes the
+			// condition) plus the resolved unit value, so anything that changes the price keeps items apart.
+			var groups = new List<(string Name, float UnitValue, int Count)>();
+			var groupIndexes = new Dictionary<(string, float), int>();
+
 			foreach (var entry in items)
 			{
-				RectTransform row = scrollList.AddRow();
+				if (entry.Key == null) continue;
+
 				partconditionscript condition = entry.Key.GetComponentInChildren<partconditionscript>();
 				string displayName = condition != null
 					? $"{entry.Value.DisplayName} {Trade.ConditionTag(condition.state)}"
 					: entry.Value.DisplayName;
-				AddLabelToRow(row, displayName, new Vector2(0f, 0f), new Vector2(0.8f, 1f));
-				AddLabelToRow(row, $"{_valueResolver(entry.Key)}g", new Vector2(0.85f, 0f), new Vector2(1f, 1f));
+				float unitValue = _valueResolver(entry.Key);
+
+				var key = (displayName, unitValue);
+				if (groupIndexes.TryGetValue(key, out int index))
+				{
+					var existing = groups[index];
+					existing.Count++;
+					groups[index] = existing;
+				}
+				else
+				{
+					groupIndexes[key] = groups.Count;
+					groups.Add((displayName, unitValue, 1));
+				}
+			}
+
+			foreach (var group in groups)
+			{
+				RectTransform row = scrollList.AddRow();
+				string unitPrice = $"{group.UnitValue:0.##}g";
+				string price = group.Count > 1 ? $"{group.Count}x {unitPrice}" : unitPrice;
+				AddLabelToRow(row, group.Name, new Vector2(0f, 0f), new Vector2(0.68f, 1f));
+				AddLabelToRow(row, price, new Vector2(0.7f, 0f), new Vector2(1f, 1f), TextAlignmentOptions.MidlineRight, overflow: true);
 			}
 
 			_totalLabel = _display.CreateLabel($"Total: {total}g", new RectPercent(50f, 80f, 90f, 8f));
@@ -100,7 +127,8 @@ namespace NPCs.Trading
 				_proposeButton.GetComponentInChildren<TextMeshProUGUI>().text = label;
 		}
 
-		private TextMeshProUGUI AddLabelToRow(RectTransform row, string text, Vector2 anchorMin, Vector2 anchorMax)
+		private TextMeshProUGUI AddLabelToRow(RectTransform row, string text, Vector2 anchorMin, Vector2 anchorMax,
+			TextAlignmentOptions alignment = TextAlignmentOptions.MidlineLeft, bool overflow = false)
 		{
 			GameObject obj = new GameObject("Label");
 			obj.transform.SetParent(row, false);
@@ -110,8 +138,8 @@ namespace NPCs.Trading
 			TextMeshProUGUI tmp = obj.AddComponent<TextMeshProUGUI>();
 			tmp.text = text;
 			tmp.fontSize = 26f;
-			tmp.alignment = TextAlignmentOptions.MidlineLeft;
-			tmp.overflowMode = TextOverflowModes.Ellipsis;
+			tmp.alignment = alignment;
+			tmp.overflowMode = overflow ? TextOverflowModes.Overflow : TextOverflowModes.Ellipsis;
 			tmp.fontSharedMaterial = TMP_Settings.defaultFontAsset.material;
 			tmp.fontSharedMaterial.shader = Shader.Find("TextMeshPro/Distance Field Overlay");
 
