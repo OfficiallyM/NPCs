@@ -89,8 +89,15 @@ namespace NPCs.Common
 		{
 			string[] names = new string[]
 			{
-				"Dave", "Terry", "Mick", "Gary", "Kev", "Baz", "Steve", "Len", "Pete",
-				"Reg", "Norm", "Brian",
+				"Aaron", "Adam", "Alan", "Andy", "Barry", "Ben", "Bernie", "Billy",
+				"Bob", "Brian", "Chris", "Cliff", "Clive", "Colin", "Connor", "Dan",
+				"Danny", "Dave", "Dean", "Dennis", "Derek", "Doug", "Earl", "Ed", "Eric",
+				"Ethan", "Finn", "Frank", "Fred", "Gary", "Gordon", "Graham", "Greg",
+				"Harry", "Jack", "Jake", "James", "Jeff", "Jim", "Joe", "Josh", "Keith",
+				"Ken", "Kyle", "Lenny", "Les", "Liam", "Lou", "Luke", "Malcolm", "Marty",
+				"Matt", "Mike", "Nigel", "Oliver", "Owen", "Pat", "Pete", "Phil", "Ralph",
+				"Ray", "Rick", "Rob", "Ron", "Roy", "Sam", "Sean", "Steve", "Ted", "Terry",
+				"Tom", "Tony", "Trevor", "Vic", "Walt", "Wes", "Wilf", "Will", "Zach",
 			};
 
 			return names[Rng.Next(names.Length)];

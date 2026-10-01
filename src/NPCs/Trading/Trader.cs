@@ -37,7 +37,7 @@ namespace NPCs.Trading
 			string name = base.GenerateName();
 
 			if (Rng.Next(3) == 0)
-				name = $"{adjectives[Rng.Next(adjectives.Length)]} {name}";
+				name = $"Trader - {adjectives[Rng.Next(adjectives.Length)]} {name}";
 
 			return name;
 		}
