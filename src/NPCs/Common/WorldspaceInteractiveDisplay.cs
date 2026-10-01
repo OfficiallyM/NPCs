@@ -283,13 +283,23 @@ namespace NPCs.Common
 			_labels.Add(label);
 		}
 
-		public RectTransform CreateContainer(RectPercent rect)
+		/// <summary>
+		/// Creates an empty container on the display.
+		/// </summary>
+		/// <param name="rect">Position and size as a percentage of canvas size.</param>
+		/// <param name="parent">
+		/// Optional parent container. The percentages are still relative to the whole canvas,
+		/// so the parent should be centred on the canvas. Children are destroyed with their parent.
+		/// </param>
+		/// <returns>The container's RectTransform.</returns>
+		public RectTransform CreateContainer(RectPercent rect, RectTransform parent = null)
 		{
 			GameObject obj = new GameObject("Container");
-			obj.transform.SetParent(_canvas.transform, false);
+			obj.transform.SetParent(parent != null ? (Transform)parent : _canvas.transform, false);
 			RectTransform rt = obj.AddComponent<RectTransform>();
 			SetRect(rt, rect);
-			_labels.Add(obj);
+			if (parent == null)
+				_labels.Add(obj);
 			return rt;
 		}
 	}

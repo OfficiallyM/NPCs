@@ -78,6 +78,9 @@ namespace NPCs.Trading
 			{
 				// Roll between -0.5 and +0.5.
 				float roll = Mathf.Lerp(-0.5f, 0.5f, (float)rng.NextDouble());
+				// Don't fluctuate currency.
+				if (category == ItemCategory.Currency)
+					roll = 0;
 				fluctuation[category] = roll;
 			}
 			return fluctuation;

@@ -49,6 +49,7 @@ namespace NPCs.Trading.Value
 			{ "Munkas01", (0f, ItemCategory.Excluded) },
 			{ "Trader", (0f, ItemCategory.Excluded) },
 			{ "Broom", (2.5f, ItemCategory.Usable) },
+			{ "PlayerRagdol", (0f, ItemCategory.Excluded) },
 		};
 
 		// Values to determine constants.

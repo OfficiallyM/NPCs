@@ -31,7 +31,7 @@ namespace NPCs.Trading
 		/// Generates stock for this trader.
 		/// </summary>
 		/// <param name="count">Number of items to generate.</param>
-		public void Generate(int count = 10)
+		public void Generate(int count = 12)
 		{
 			Items.Clear();
 
