@@ -1,6 +1,7 @@
 ﻿using NPCs.Common;
 using NPCs.Dialogue.Core;
 using NPCs.Utilities;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -207,7 +208,7 @@ namespace NPCs.Dialogue
 		{
 			_variables = new Dictionary<string, string>()
 			{
-				{ "playerName", Environment.UserName }
+				{ "playerName", SteamManager.Initialized ? SteamFriends.GetPersonaName() : "traveller" }
 			};
 			_playerTransform = mainscript.M.player.transform;
 		}
