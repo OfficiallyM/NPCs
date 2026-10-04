@@ -24,6 +24,8 @@ namespace NPCs.Dialogue
 		public static bool HasActiveConversation => _activeRunner != null;
 		public static bool HasBackgroundConversation => _activeRunner != null && !_uiEnabled;
 
+		public static ConversationRunner ActiveRunner => _activeRunner;
+
 		/// <summary>
 		/// Sets the active conversation runner, driving the UI.
 		/// </summary>
@@ -95,22 +97,19 @@ namespace NPCs.Dialogue
 				if (hitInfo.transform.GetComponentInParent<NPC>()?.IsDead ?? false)
 					return;
 
-				if (!HasBackgroundConversation)
+				var runner = hitInfo.transform.GetComponentInParent<ConversationRunner>();
+				if (runner != null && runner != _activeRunner)
 				{
-					var runner = hitInfo.transform.GetComponentInParent<ConversationRunner>();
-					if (runner != null)
-					{
-						player.E = $"Speak to {runner.GetVariable("npcName") ?? "Stranger"}";
-						player.BcanE = true;
+					player.E = $"Speak to {runner.GetVariable("npcName") ?? "Stranger"}";
+					player.BcanE = true;
 
-						if (Input.GetKeyDown(KeyCode.E))
-						{
-							runner.StartConversation();
-							return;
-						}
+					if (Input.GetKeyDown(KeyCode.E))
+					{
+						runner.StartConversation();
+						return;
 					}
 				}
-				else
+				else if (HasBackgroundConversation)
 				{
 					var tradeSession = hitInfo.transform.GetComponentInParent<TradeSession>();
 					if (tradeSession != null && tradeSession.IsActive && !hitInfo.collider.name.Contains("Zone"))
@@ -121,7 +120,6 @@ namespace NPCs.Dialogue
 						if (Input.GetKeyDown(KeyCode.E))
 						{
 							tradeSession.Cancel();
-
 							return;
 						}
 					}

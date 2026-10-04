@@ -49,8 +49,8 @@ namespace NPCs.Dialogue
 		{
 			if (ConversationUI.HasActiveConversation)
 			{
-				Logging.LogWarning($"Conversation '{ConversationId}' blocked, player is already in a conversation.");
-				return;
+				if (ConversationUI.ActiveRunner == this) return;
+				ConversationUI.ActiveRunner.EndConversation();
 			}
 
 			Conversation conversation = DialogueRegistry.Get(ConversationId);
