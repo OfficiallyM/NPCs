@@ -1,5 +1,4 @@
-﻿using NPCs.Common;
-using NPCs.Trading.Core;
+﻿using NPCs.Trading.Core;
 using NPCs.Trading.Value;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,11 +11,25 @@ namespace NPCs.Trading
 	/// </summary>
 	internal class TradeZone : MonoBehaviour
 	{
+		// Zone position and size, relative to the trader.
+		private static readonly Vector3 _zoneOffset = new Vector3(2.5f, -0.92f, 2.5f);
+		private static readonly Vector3 _zoneSize = new Vector3(3f, 3f, 3f);
+
+		// How often the zone is checked while a trade is open, in seconds.
+		private const float PollInterval = 0.1f;
+
 		private GameObject _zoneVisual;
-		private BoxCollider _trigger;
 		private HashSet<GameObject> _excludedItems = new HashSet<GameObject>();
 		private Dictionary<GameObject, ItemData> _currentItems = new Dictionary<GameObject, ItemData>();
 		private bool _isOpen = false;
+		private float _nextPoll = 0f;
+
+		// Reused between polls to avoid allocating every check.
+		private Collider[] _buffer = new Collider[128];
+		private HashSet<tosaveitemscript> _roots = new HashSet<tosaveitemscript>();
+		private HashSet<GameObject> _inZone = new HashSet<GameObject>();
+		private HashSet<GameObject> _ignored = new HashSet<GameObject>();
+		private List<GameObject> _toRemove = new List<GameObject>();
 
 		/// <summary>
 		/// Fired when the items in the trade zone change.
@@ -26,7 +39,6 @@ namespace NPCs.Trading
 		private void Awake()
 		{
 			CreateVisual();
-			CreateTrigger();
 		}
 
 		private void CreateVisual()
@@ -34,7 +46,7 @@ namespace NPCs.Trading
 			_zoneVisual = GameObject.CreatePrimitive(PrimitiveType.Quad);
 			_zoneVisual.name = "Trade zone";
 			_zoneVisual.transform.SetParent(transform, false);
-			_zoneVisual.transform.localPosition = new Vector3(2.5f, -0.92f, 2.5f);
+			_zoneVisual.transform.localPosition = _zoneOffset;
 			_zoneVisual.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 			_zoneVisual.transform.localScale = new Vector3(3f, 3f, 3f);
 
@@ -49,23 +61,12 @@ namespace NPCs.Trading
 			_zoneVisual.SetActive(false);
 		}
 
-		private void CreateTrigger()
+		private void Update()
 		{
-			// Trigger sits on a child object at the same position as the visual.
-			GameObject triggerObj = new GameObject("TradeZoneTrigger");
-			triggerObj.transform.SetParent(transform, false);
-			triggerObj.transform.localPosition = new Vector3(2.5f, -0.92f, 2.5f);
-			triggerObj.layer = 2;
+			if (!_isOpen || Time.time < _nextPoll) return;
 
-			_trigger = triggerObj.AddComponent<BoxCollider>();
-			_trigger.isTrigger = true;
-			_trigger.size = new Vector3(3f, 3f, 3f);
-			_trigger.enabled = false;
-
-			// Forward trigger events to this component.
-			var forwarder = triggerObj.AddComponent<TriggerForwarder>();
-			forwarder.OnEnter += OnTriggerItemEnter;
-			forwarder.OnExit += OnTriggerItemExit;
+			_nextPoll = Time.time + PollInterval;
+			Poll();
 		}
 
 		/// <summary>
@@ -74,26 +75,13 @@ namespace NPCs.Trading
 		public void Open()
 		{
 			_isOpen = true;
+			_nextPoll = 0f;
 			_excludedItems.Clear();
 			_currentItems.Clear();
+			_ignored.Clear();
 
 			// One-time snapshot of items already in zone before trade opened.
-			Collider[] existing = Physics.OverlapBox(
-				_trigger.transform.position,
-				_trigger.size / 2f,
-				_trigger.transform.rotation
-			);
-
-			foreach (Collider col in existing)
-			{
-				tosaveitemscript rootSave = col.gameObject.GetComponentInParent<tosaveitemscript>();
-				if (rootSave == null) continue;
-
-				foreach (tosaveitemscript save in rootSave.GetComponentsInChildren<tosaveitemscript>())
-					_excludedItems.Add(save.gameObject);
-			}
-
-			_trigger.enabled = true;
+			CollectItemsInZone(_excludedItems);
 		}
 
 		/// <summary>
@@ -102,9 +90,9 @@ namespace NPCs.Trading
 		public void Close()
 		{
 			_isOpen = false;
-			_trigger.enabled = false;
 			_excludedItems.Clear();
 			_currentItems.Clear();
+			_ignored.Clear();
 		}
 
 		/// <summary>
@@ -117,46 +105,90 @@ namespace NPCs.Trading
 		/// </summary>
 		public void Hide() => _zoneVisual.SetActive(false);
 
-		private void OnTriggerItemEnter(Collider other)
+		/// <summary>
+		/// Checks what is currently in the zone and reports any changes.
+		/// </summary>
+		private void Poll()
 		{
-			if (!_isOpen) return;
-
-			tosaveitemscript rootSave = other.gameObject.GetComponentInParent<tosaveitemscript>();
-			if (rootSave == null) return;
+			_inZone.Clear();
+			CollectItemsInZone(_inZone);
 
 			bool changed = false;
-			foreach (tosaveitemscript save in rootSave.GetComponentsInChildren<tosaveitemscript>())
+
+			// Items that have arrived.
+			foreach (GameObject item in _inZone)
 			{
-				if (_excludedItems.Contains(save.gameObject)) continue;
-				if (_currentItems.ContainsKey(save.gameObject)) continue;
+				if (_excludedItems.Contains(item)) continue;
+				if (_currentItems.ContainsKey(item)) continue;
+				if (_ignored.Contains(item)) continue;
 
-				ItemData data = ItemRegistry.GetData(save.gameObject);
-				if (data == null || data.Value <= 0f) continue;
+				ItemData data = ItemRegistry.GetData(item);
+				if (data == null || data.Value <= 0f)
+				{
+					// Not tradeable. Remember that so it isn't looked up again every poll.
+					_ignored.Add(item);
+					continue;
+				}
 
-				_currentItems[save.gameObject] = data;
+				_currentItems[item] = data;
 				changed = true;
 			}
+
+			// Items that have left, or been destroyed.
+			_toRemove.Clear();
+			foreach (GameObject item in _currentItems.Keys)
+			{
+				if (!_inZone.Contains(item))
+					_toRemove.Add(item);
+			}
+
+			foreach (GameObject item in _toRemove)
+			{
+				_currentItems.Remove(item);
+				changed = true;
+			}
+
+			_ignored.IntersectWith(_inZone);
 
 			if (changed)
 				OnItemsChanged?.Invoke(_currentItems);
 		}
 
-		private void OnTriggerItemExit(Collider other)
+		/// <summary>
+		/// Adds every save item currently inside the zone to the set.
+		/// </summary>
+		private void CollectItemsInZone(HashSet<GameObject> into)
 		{
-			if (!_isOpen) return;
+			Vector3 centre = transform.TransformPoint(_zoneOffset);
+			Vector3 scale = transform.lossyScale;
+			Vector3 halfExtents = new Vector3(
+				Mathf.Abs(_zoneSize.x * scale.x),
+				Mathf.Abs(_zoneSize.y * scale.y),
+				Mathf.Abs(_zoneSize.z * scale.z)
+			) * 0.5f;
 
-			tosaveitemscript rootSave = other.gameObject.GetComponentInParent<tosaveitemscript>();
-			if (rootSave == null) return;
-
-			bool changed = false;
-			foreach (tosaveitemscript save in rootSave.GetComponentsInChildren<tosaveitemscript>())
+			// Triggers are ignored so only solid parts of items count.
+			int count = Physics.OverlapBoxNonAlloc(centre, halfExtents, _buffer, transform.rotation, Physics.AllLayers, QueryTriggerInteraction.Ignore);
+			while (count == _buffer.Length)
 			{
-				if (_currentItems.Remove(save.gameObject))
-					changed = true;
+				// The buffer filled up, so there may be more. Grow it and look again.
+				_buffer = new Collider[_buffer.Length * 2];
+				count = Physics.OverlapBoxNonAlloc(centre, halfExtents, _buffer, transform.rotation, Physics.AllLayers, QueryTriggerInteraction.Ignore);
 			}
 
-			if (changed)
-				OnItemsChanged?.Invoke(_currentItems);
+			_roots.Clear();
+			for (int i = 0; i < count; i++)
+			{
+				Collider col = _buffer[i];
+				_buffer[i] = null;
+				if (col == null) continue;
+
+				tosaveitemscript rootSave = col.gameObject.GetComponentInParent<tosaveitemscript>();
+				if (rootSave == null || !_roots.Add(rootSave)) continue;
+
+				foreach (tosaveitemscript save in rootSave.GetComponentsInChildren<tosaveitemscript>())
+					into.Add(save.gameObject);
+			}
 		}
 	}
 }
