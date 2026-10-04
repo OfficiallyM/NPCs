@@ -212,6 +212,7 @@ namespace NPCs.Trading
 			_tradeZone.Close();
 
 			_runner.AdvanceTo("trade_accepted");
+			_trader.Ai.Nod();
 			_runner.ConversationRange = 5f;
 		}
 
@@ -314,6 +315,7 @@ namespace NPCs.Trading
 
 			// Return to dialogue at the accepted node.
 			_runner.AdvanceTo("trade_accepted");
+			_trader.Ai.Nod();
 			_runner.ConversationRange = 5f;
 		}
 
@@ -321,6 +323,7 @@ namespace NPCs.Trading
 		{
 			// Leave everything in place, let the player adjust and try again.
 			_runner.AdvanceTo("trade_rejected");
+			_trader.Ai.ShakeHead();
 		}
 
 		private void UpdateProposeLabel()

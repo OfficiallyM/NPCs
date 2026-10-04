@@ -1,4 +1,5 @@
 ﻿using NPCs.AI.States;
+using NPCs.AI.States.NPCs.AI.States;
 using NPCs.Common;
 using NPCs.Dialogue;
 using UnityEngine;
@@ -9,6 +10,7 @@ namespace NPCs.AI
 	{
 		private const float LOOK_HEIGHT = 1.6f;
 		private const float LOOK_DISTANCE = 5f;
+		private const float MIN_GESTURE_DISTANCE = 2f;
 
 		private NPCState _state;
 		private ConversationRunner _runner;
@@ -109,11 +111,29 @@ namespace NPCs.AI
 			transform.rotation = Quaternion.RotateTowards(transform.rotation, target, TurnSpeed * Time.deltaTime);
 		}
 
+		public void Nod() => SetState(new GestureState(this, GestureType.Nod));
+		public void ShakeHead() => SetState(new GestureState(this, GestureType.Shake));
+
+		// Looks at a point rotated away from the straight-line view of it.
+		// Positive pitch looks down, positive yaw looks right.
+		public void LookAtOffset(Vector3 point, float pitch, float yaw)
+		{
+			Vector3 head = transform.position + Vector3.up * LOOK_HEIGHT;
+			Vector3 toPoint = point - head;
+			float distance = Mathf.Max(toPoint.magnitude, MIN_GESTURE_DISTANCE);
+			Vector3 dir = toPoint.sqrMagnitude > 0.0001f ? toPoint.normalized : transform.forward;
+
+			Vector3 right = Vector3.Cross(Vector3.up, dir);
+			right = right.sqrMagnitude > 0.0001f ? right.normalized : transform.right;
+
+			dir = Quaternion.AngleAxis(yaw, Vector3.up) * Quaternion.AngleAxis(pitch, right) * dir;
+			LookAt(head + dir * distance);
+		}
+
 		private float YawTo(Vector3 point)
 		{
 			Vector3 flat = Vector3.ProjectOnPlane(point - transform.position, Vector3.up);
 			return Vector3.SignedAngle(transform.forward, flat, Vector3.up);
 		}
-
 	}
 }
