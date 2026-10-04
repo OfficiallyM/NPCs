@@ -135,6 +135,11 @@ namespace NPCs.Dialogue
 			node.RollText();
 			_currentNode = node;
 			OnNodeChanged?.Invoke(_currentNode);
+
+			// Automatically trigger a continue for background conversations.
+			bool hasOptions = node.Options != null && node.Options.Count > 0;
+			if (!hasOptions && node.Next == "@background" && ConversationUI.HasBackgroundConversation)
+				AdvanceTo(node.Next);
 		}
 
 		/// <summary>

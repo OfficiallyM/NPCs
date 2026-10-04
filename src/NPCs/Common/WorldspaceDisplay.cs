@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using NPCs.Utilities;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -49,6 +50,7 @@ namespace NPCs.Common
 		private Coroutine _displayRoutine;
 		private Coroutine _textRenderRoutine;
 		private Coroutine _fadeRoutine;
+		private Coroutine _delayedClearRoutine;
 
 		private void Init()
 		{
@@ -160,6 +162,12 @@ namespace NPCs.Common
 				return;
 			}
 
+			if (_delayedClearRoutine != null)
+			{
+				StopCoroutine(_delayedClearRoutine);
+				_delayedClearRoutine = null;
+			}
+
 			if (_displayRoutine != null)
 				StopCoroutine(_displayRoutine);
 			if (_textRenderRoutine != null)
@@ -185,11 +193,11 @@ namespace NPCs.Common
 
 		public void ClearMessageAfterDelay(string fullText, float typewriterSpeed)
 		{
-			if (_fadeRoutine != null)
-				StopCoroutine(_fadeRoutine);
+			if (_delayedClearRoutine != null)
+				StopCoroutine(_delayedClearRoutine);
 
-			float delay = Mathf.Clamp(fullText.Length * typewriterSpeed, 3f, 10f);
-			StartCoroutine(DelayedClearRoutine(delay));
+			float delay = Mathf.Clamp(fullText.Length * typewriterSpeed, 5f, 15f);
+			_delayedClearRoutine = StartCoroutine(DelayedClearRoutine(delay));
 		}
 
 
@@ -279,6 +287,8 @@ namespace NPCs.Common
 		private IEnumerator DelayedClearRoutine(float delay)
 		{
 			yield return new WaitForSeconds(delay);
+			Logging.LogDebug($"Clearing display after {delay}s");
+			_delayedClearRoutine = null;
 			ClearMessage();
 		}
 	}
