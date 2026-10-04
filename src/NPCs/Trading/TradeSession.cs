@@ -109,7 +109,6 @@ namespace NPCs.Trading
 
 			if (skipDialogue)
 				return;
-			ConversationUI.Show();
 			_runner.AdvanceTo("trade_cancelled");
 		}
 
@@ -212,7 +211,6 @@ namespace NPCs.Trading
 			_tradeZone.Hide();
 			_tradeZone.Close();
 
-			ConversationUI.Show();
 			_runner.AdvanceTo("trade_accepted");
 			_runner.ConversationRange = 5f;
 		}
@@ -315,7 +313,6 @@ namespace NPCs.Trading
 			_tradeZone.Close();
 
 			// Return to dialogue at the accepted node.
-			ConversationUI.Show();
 			_runner.AdvanceTo("trade_accepted");
 			_runner.ConversationRange = 5f;
 		}

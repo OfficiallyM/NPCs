@@ -175,7 +175,7 @@ namespace NPCs.Dialogue
 				{
 					GUILayout.BeginHorizontal();
 					GUILayout.FlexibleSpace();
-					if (GUILayout.Button(node.Next != null ? "Continue..." : "Close", GUILayout.MaxWidth(width - 40f), GUILayout.MaxHeight(35f)))
+					if (GUILayout.Button("Continue...", GUILayout.MaxWidth(width - 40f), GUILayout.MaxHeight(35f)))
 						_activeRunner.Advance();
 					GUILayout.FlexibleSpace();
 					GUILayout.EndHorizontal();

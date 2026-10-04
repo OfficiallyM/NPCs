@@ -9,6 +9,7 @@ namespace NPCs.Dialogue
 	{
 		private ConversationRunner _runner;
 		private WorldspaceDisplay _display;
+		private bool _lingering;
 
 		/// <summary>
 		/// Whether the player can currently see the speech box.
@@ -27,7 +28,21 @@ namespace NPCs.Dialogue
 			_runner.OnNodeChanged += node => _display.RenderMessage(
 				new WorldspaceDisplay.Message(new List<string>() { _runner.ResolveText(node.Text) })
 			);
-			_runner.OnConversationEnded += _display.ClearMessage;
+			_runner.OnConversationEnding += node =>
+			{
+				_lingering = true;
+				_display.ClearMessageAfterDelay(_runner.ResolveText(node.Text), 0.03f);
+			};
+
+			_runner.OnConversationEnded += () =>
+			{
+				if (_lingering)
+				{
+					_lingering = false;
+					return;
+				}
+				_display.ClearMessage();
+			};
 
 			_runner.OnBackground += () =>
 			{

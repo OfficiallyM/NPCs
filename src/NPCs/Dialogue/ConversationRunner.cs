@@ -43,6 +43,11 @@ namespace NPCs.Dialogue
 		public event Action OnConversationEnded;
 
 		/// <summary>
+		/// Fired when the conversation is triggered to end.
+		/// </summary>
+		public event Action<ConversationNode> OnConversationEnding;
+
+		/// <summary>
 		/// Starts a conversation.
 		/// </summary>
 		public void StartConversation()
@@ -136,8 +141,18 @@ namespace NPCs.Dialogue
 			_currentNode = node;
 			OnNodeChanged?.Invoke(_currentNode);
 
-			// Automatically trigger a continue for background conversations.
 			bool hasOptions = node.Options != null && node.Options.Count > 0;
+			if (hasOptions) return;
+
+			// Terminal node, fade out the line and end the conversation.
+			if (!hasOptions && string.IsNullOrEmpty(node.Next))
+			{
+				OnConversationEnding?.Invoke(node);
+				EndConversation();
+				return;
+			}
+
+			// Automatically trigger a continue for background conversations.
 			if (!hasOptions && node.Next == "@background" && ConversationUI.HasBackgroundConversation)
 				AdvanceTo(node.Next);
 		}
