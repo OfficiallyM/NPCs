@@ -15,7 +15,6 @@ namespace NPCs.Trading.Value
 		{
 			_registry = new Dictionary<GameObject, ItemData>();
 
-			Logging.LogDebug("Item values:");
 			foreach (var item in itemdatabase.d.items)
 			{
 				if (item == null) continue;
@@ -94,7 +93,6 @@ namespace NPCs.Trading.Value
 			ItemData data = GetItemData(item);
 			data.Value = Maths.RoundToNearestHalf(data.Value);
 			_registry[item] = data;
-			Logging.LogDebug($"{item.name} [{data.Category}]: {data.Value}g");
 		}
 
 		private static ItemData GetItemData(GameObject item)
