@@ -80,7 +80,7 @@ namespace NPCs.Trading
 			_valueResolver = valueResolver;
 
 			_display = gameObject.AddComponent<WorldspaceInteractiveDisplay>();
-			_display.SetPosition(new Vector3(-1.7f, 0.3f, 0f));
+			_display.SetPosition(new Vector3(-1.7f, 1f, 0f));
 			_display.SetSize(new Vector2(900f, 720f));
 			_display.Init();
 		}

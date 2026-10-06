@@ -19,9 +19,9 @@ namespace NPCs.Dialogue
 		public void Start()
 		{
 			_runner = GetComponent<ConversationRunner>();
-			Transform spine = transform.Find("munkas01/Default simplified/root/spine05/spine04/spine03/spine02/spine01");
-			_display = spine.gameObject.AddComponent<WorldspaceDisplay>();
-			_display.SetPosition(new Vector3(0, 0.5f, -0.1f));
+			// The anchor stays upright when the head turns, so the box doesn't wobble with the gaze.
+			_display = _runner.Npc.Body.SpeechAnchor.gameObject.AddComponent<WorldspaceDisplay>();
+			_display.SetPosition(Vector3.zero);
 			_display.SetFontSize(25);
 			_display.SetMaxWidth(600);
 

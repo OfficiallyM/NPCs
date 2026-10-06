@@ -50,16 +50,11 @@ namespace NPCs
 		public override void DbLoad()
 		{
 			AssetBundle bundle = AssetBundle.LoadFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream($"{nameof(NPCs)}.npcs"));
-			NPC.Flesh = bundle.LoadAsset<Texture>("flesh.png");
-			var textures = bundle.LoadAllAssets<Texture>();
-			NPC.Eyes = textures.Where(t => t.name.StartsWith("eyes_")).ToArray();
-			NPC.Outfits = textures.Where(t => t.name.StartsWith("outfit_")).ToArray();
-			NPC.Shoes = textures.Where(t => t.name.StartsWith("shoes_")).ToArray();
 			var silver = bundle.LoadAsset<GameObject>("silver");
 			bundle.Unload(false);
 
 			// NPC item IDs: 0 - 1000.
-			RegisterItem(itemdatabase.d.gmunkas01, 0, "Trader")
+			RegisterItem(itemdatabase.d.gragdoll, 0, "Trader")
 				.WithRigidbody(90, 5)
 				.AddComponent<Trader>()
 				.Register();
@@ -92,6 +87,10 @@ namespace NPCs
 
 		public override void Update()
 		{
+			// Dev only: spawn the player ragdoll as a frozen, randomised prop and log how it is built.
+			if (Debug && Input.GetKeyDown(KeyCode.F8))
+				RagdollProbe.Run();
+
 			// Process trader spawning queue.
 			if (TraderSpawnQueue.Count > 0)
 			{

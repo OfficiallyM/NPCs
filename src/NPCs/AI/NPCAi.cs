@@ -14,7 +14,7 @@ namespace NPCs.AI
 
 		private NPCState _state;
 		private ConversationRunner _runner;
-		private newAiScript _vanilla;
+		private NPCBody _body;
 		private bool _turningBody;
 
 		// How close the player needs to get before the NPC reacts.
@@ -27,7 +27,7 @@ namespace NPCs.AI
 		public virtual float TurnSpeed => 90f;
 
 		// How far the head can turn before the body starts following.
-		// Kept under the animator's look-at clamp (roughly 90 degrees) so the head never reaches its hard limit.
+		// Kept under the head's own turn limit (80 degrees, see NPCHeadLook) so the head never reaches it.
 		public virtual float BodyTurnAngle => 70f;
 
 		// The body stops turning once the target is within this angle of straight ahead.
@@ -40,23 +40,14 @@ namespace NPCs.AI
 		private void Start()
 		{
 			_runner = GetComponent<ConversationRunner>();
-			_vanilla = GetComponent<newAiScript>();
-
-			// The vanilla AI is disabled, so its Start never unparents or resets the look target.
-			// The animator reads from it every frame, so make sure one exists.
-			if (_vanilla.target == null)
-			{
-				var target = new GameObject("AI_Target").transform;
-				target.SetParent(transform, false);
-				_vanilla.target = target;
-			}
+			_body = GetComponent<NPC>().Body;
 
 			GetComponent<NPC>().OnDeath += () => enabled = false;
 
 			Rest();
 
-			// The animator's look position starts at the world origin, so snap it to avoid an initial head swing.
-			_vanilla.anim.lookTarget = _vanilla.target.position;
+			// The head's look point starts at the world origin, so snap it to avoid an initial head swing.
+			_body.Look.Snap();
 		}
 
 		private void Update()
@@ -78,10 +69,10 @@ namespace NPCs.AI
 		// Called when the NPC notices the player.
 		public virtual void Engage() => SetState(new EngagedState(this));
 
-		// The vanilla animator lerps its head IK towards this point, so we only need to move it.
+		// The head lerps towards this point on its own, so we only need to move it.
 		public void LookAt(Vector3 point)
 		{
-			_vanilla.target.position = point;
+			_body.Look.Target = point;
 		}
 
 		public void LookAhead()
@@ -93,7 +84,7 @@ namespace NPCs.AI
 		public void FaceTowards(Vector3 point)
 		{
 			// Use where the head is actually looking rather than where it's heading, so the body reacts to the delayed head movement.
-			float headYaw = Mathf.Abs(YawTo(_vanilla.anim.lookTarget));
+			float headYaw = Mathf.Abs(YawTo(_body.Look.Current));
 
 			if (!_turningBody && headYaw > BodyTurnAngle)
 				_turningBody = true;

@@ -12,7 +12,7 @@ namespace NPCs.Trading
 	internal class TradeZone : MonoBehaviour
 	{
 		// Zone position and size, relative to the trader.
-		private static readonly Vector3 _zoneOffset = new Vector3(2.5f, -0.92f, 2.5f);
+		private static readonly Vector3 _zoneOffset = new Vector3(2.5f, 0.001f, 2.5f);
 		private static readonly Vector3 _zoneSize = new Vector3(3f, 3f, 3f);
 
 		// How often the zone is checked while a trade is open, in seconds.
