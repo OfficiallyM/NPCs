@@ -87,10 +87,6 @@ namespace NPCs
 
 		public override void Update()
 		{
-			// Dev only: spawn the player ragdoll as a frozen, randomised prop and log how it is built.
-			if (Debug && Input.GetKeyDown(KeyCode.F8))
-				RagdollProbe.Run();
-
 			// Process trader spawning queue.
 			if (TraderSpawnQueue.Count > 0)
 			{
