@@ -1,5 +1,7 @@
 ﻿using NPCs.AI;
+using NPCs.Appearance;
 using NPCs.Dialogue;
+using NPCs.Enums;
 using NPCs.Utilities;
 using System;
 using System.Collections;
@@ -15,6 +17,8 @@ namespace NPCs.Common
 		public string NPCName { get; private set; }
 		public NPCAi Ai { get; private set; }
 		public NPCBody Body { get; private set; }
+		public NPCAppearance Appearance { get; private set; }
+		public Gender Gender { get; private set; }
 		public event Action OnDeath;
 		public bool IsDead = false;
 
@@ -43,11 +47,14 @@ namespace NPCs.Common
 			Save = GetComponent<tosaveitemscript>();
 			Rng = new System.Random(Save.idInSave);
 			Runner = GetComponent<ConversationRunner>();
+
+			// The look comes first because the name list depends on gender.
+			Appearance = CreateAppearance();
+			Gender = (Gender)Appearance.Character;
+			Body.SetAppearance(Appearance);
+
 			NPCName = GenerateName();
 			Runner.AddVariable("npcName", NPCName);
-
-			// Only the male model for now, to match the name list.
-			Body.SetOutfit(Save.idInSave, NPCBody.MALE);
 
 			OnDeath += Body.Ragdoll;
 			OnDeath += PlayDeathSound;
@@ -68,21 +75,15 @@ namespace NPCs.Common
 
 		protected virtual string GenerateName()
 		{
-			string[] names = new string[]
-			{
-				"Aaron", "Adam", "Alan", "Andy", "Barry", "Ben", "Bernie", "Billy",
-				"Bob", "Brian", "Chris", "Cliff", "Clive", "Colin", "Connor", "Dan",
-				"Danny", "Dave", "Dean", "Dennis", "Derek", "Doug", "Earl", "Ed", "Eric",
-				"Ethan", "Finn", "Frank", "Fred", "Gary", "Gordon", "Graham", "Greg",
-				"Harry", "Jack", "Jake", "James", "Jeff", "Jim", "Joe", "Josh", "Keith",
-				"Ken", "Kyle", "Lenny", "Les", "Liam", "Lou", "Luke", "Malcolm", "Marty",
-				"Matt", "Mike", "Nigel", "Oliver", "Owen", "Pat", "Pete", "Phil", "Ralph",
-				"Ray", "Rick", "Rob", "Ron", "Roy", "Sam", "Sean", "Steve", "Ted", "Terry",
-				"Tom", "Tony", "Trevor", "Vic", "Walt", "Wes", "Wilf", "Will", "Zach",
-			};
-
+			string[] names = NPCNames.For(Gender);
 			return names[Rng.Next(names.Length)];
 		}
+
+		/// <summary>
+		/// Override to give an NPC a set look, or to force a gender, instead of a fully random one.
+		/// </summary>
+		/// <returns>The appearance to dress the NPC in</returns>
+		protected virtual NPCAppearance CreateAppearance() => AppearanceGenerator.Generate(Body.Outfit, Save.idInSave);
 
 		/// <summary>
 		/// Override to provide an NPC with their own behaviour.

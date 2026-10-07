@@ -287,7 +287,6 @@ namespace NPCs.Common
 		private IEnumerator DelayedClearRoutine(float delay)
 		{
 			yield return new WaitForSeconds(delay);
-			Logging.LogDebug($"Clearing display after {delay}s");
 			_delayedClearRoutine = null;
 			ClearMessage();
 		}

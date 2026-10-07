@@ -1,3 +1,5 @@
+using NPCs.Appearance;
+using NPCs.Utilities;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -8,10 +10,6 @@ namespace NPCs.Common
 	[DefaultExecutionOrder(-50)]
 	public class NPCBody : MonoBehaviour
 	{
-		public const int MALE = 0;
-		public const int FEMALE = 1;
-
-		private const int MAX_CHARACTER_ATTEMPTS = 16;
 		private const float DEFAULT_LOOK_LERP = 5f;
 
 		private const float HITBOX_HEIGHT = 1.6f;
@@ -45,6 +43,8 @@ namespace NPCs.Common
 		private GameObject _hitbox;
 		private bool _ragdolled;
 
+		public playermodeloutfitscript Outfit => _outfit;
+
 		public NPCHeadLook Look { get; private set; }
 
 		public Transform Head => _rig.head;
@@ -72,27 +72,36 @@ namespace NPCs.Common
 		}
 
 		/// <summary>
-		/// Gives the NPC a random outfit that is the same every time for the same seed.
+		/// Dresses the NPC in the given appearance.
 		/// </summary>
-		public void SetOutfit(int seed, int character)
+		public void SetAppearance(NPCAppearance appearance)
 		{
 			// The prefab ships with its renderers off. Refresh only toggles the character meshes, so the rest must be on first.
 			foreach (Renderer renderer in GetComponentsInChildren<Renderer>(true))
 				renderer.enabled = true;
 
-			// Seeded so an NPC keeps its look between loads, without disturbing the global random state.
-			Random.State state = Random.state;
-			Random.InitState(seed);
+			if (appearance.Character < 0 || appearance.Character >= _outfit.characters.Length || _outfit.characters[appearance.Character] == null)
+			{
+				Logging.LogWarning($"Appearance uses unknown character {appearance.Character}, leaving the outfit alone.");
+				return;
+			}
 
-			_outfit.SetRandom(false);
+			_outfit.selectedCharacter = appearance.Character;
 
-			// SetRandom picks the model itself, so keep rolling until it lands on the one asked for.
-			for (int i = 0; i < MAX_CHARACTER_ATTEMPTS && _outfit.selectedCharacter != character; i++)
-				_outfit.SetRandom(false);
+			var segments = _outfit.characters[appearance.Character].ch.segments;
+			if (appearance.Segments.Count != segments.Length)
+				Logging.LogWarning($"Appearance has {appearance.Segments.Count} segments but the character has {segments.Length}.");
 
-			Random.state = state;
+			for (int i = 0; i < segments.Length && i < appearance.Segments.Count; i++)
+			{
+				segments[i].BEnabled = appearance.Segments[i].Enabled;
+				segments[i].Ccolor = new Color(appearance.Segments[i].R, appearance.Segments[i].G, appearance.Segments[i].B, 1f);
+			}
 
-			// SetRandom leaves the player-camera fade distance applied, which would dither the body.
+			// Passing true stops Refresh from broadcasting this to multiplayer as though it were a player's own look.
+			_outfit.Refresh(true);
+
+			// Refresh leaves the player-camera fade distance applied, which would dither the body.
 			_outfit.ReSetDistance();
 		}
 
@@ -141,7 +150,7 @@ namespace NPCs.Common
 			Look.Apply();
 		}
 
-		// Swings a bone about its pivot until the line to its child points the wanted way, whatever the bone's own axes are.
+		// Swings a bone about its pivot until the line to its child points the wanted way, whatever the bone's own axis are.
 		private void Aim(Transform bone, Transform child, Vector3 localDirection)
 		{
 			Vector3 current = child.position - bone.position;

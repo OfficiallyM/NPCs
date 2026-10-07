@@ -200,7 +200,7 @@ namespace NPCs.Trading
 			}
 			catch (Exception ex)
 			{
-				Logging.LogDebug($"Thumbnail setup failed for {item.Prefab.name} - {ex.Message}");
+				Logging.LogError($"Thumbnail setup failed for {item.Prefab.name} - {ex.Message}");
 			}
 
 			// Apply the same condition and colour the item will have once it is bought.
@@ -212,7 +212,7 @@ namespace NPCs.Trading
 			}
 			catch (Exception ex)
 			{
-				Logging.LogDebug($"Thumbnail condition failed for {item.Prefab.name} - {ex.Message}");
+				Logging.LogError($"Thumbnail condition failed for {item.Prefab.name} - {ex.Message}");
 			}
 
 			// Left doors and gauges face the wrong way round.
