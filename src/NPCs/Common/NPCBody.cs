@@ -178,7 +178,6 @@ namespace NPCs.Common
 
 			anchor = new GameObject($"Wear_{type}").transform;
 			anchor.SetParent(Head, false);
-			Logging.LogDebug($"Head bone world scale is {Head.lossyScale}.");
 			ApplyWearableAnchor(type, anchor);
 			_wearableAnchors[type] = anchor;
 			return anchor;

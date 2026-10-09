@@ -50,9 +50,6 @@ namespace NPCs.Appearance
 				_byType[wear.tipus].Add(item);
 				_byName[item.name] = item;
 			}
-
-			foreach (var pair in _byType)
-				Logging.LogDebug($"Wearables ({pair.Key}): {string.Join(", ", pair.Value.Select(i => i.name).ToArray())}");
 		}
 	}
 }
