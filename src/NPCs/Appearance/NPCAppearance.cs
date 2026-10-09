@@ -16,5 +16,10 @@ namespace NPCs.Appearance
 		/// One entry per segment of the character, in the outfit script's order.
 		/// </summary>
 		public List<SegmentAppearance> Segments = new List<SegmentAppearance>();
+
+		/// <summary>
+		/// The wearables to put on, such as glasses or a hat.
+		/// </summary>
+		public List<WornItem> Wearables = new List<WornItem>();
 	}
 }

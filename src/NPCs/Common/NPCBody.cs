@@ -42,6 +42,9 @@ namespace NPCs.Common
 		private Collider[] _limbColliders;
 		private GameObject _hitbox;
 		private bool _ragdolled;
+		private readonly Dictionary<wearableType, Transform> _wearableAnchors = new Dictionary<wearableType, Transform>();
+		private readonly Dictionary<wearableType, GameObject> _worn = new Dictionary<wearableType, GameObject>();
+		private int _anchorVersion = -1;
 
 		public playermodeloutfitscript Outfit => _outfit;
 
@@ -103,6 +106,106 @@ namespace NPCs.Common
 
 			// Refresh leaves the player-camera fade distance applied, which would dither the body.
 			_outfit.ReSetDistance();
+
+			SetWearables(appearance.Wearables);
+		}
+
+		/// <summary>
+		/// Puts an item on, replacing anything already worn of the same kind.
+		/// </summary>
+		/// <param name="itemName">Item database name of a wearable</param>
+		/// <param name="variant">Decides which look the item takes if it has several</param>
+		public void Wear(string itemName, int variant = 0)
+		{
+			GameObject prefab = WearableCatalog.Find(itemName);
+			if (prefab == null)
+			{
+				Logging.LogWarning($"Unknown wearable {itemName}, skipping it.");
+				return;
+			}
+
+			wearableType type = prefab.GetComponentInChildren<wearable>(true).tipus;
+
+			wearableType slot = SlotOf(type);
+			if (_worn.TryGetValue(slot, out GameObject current) && current != null)
+				Destroy(current);
+
+			_worn[slot] = WearableFitter.Fit(prefab, GetWearableAnchor(type), variant);
+		}
+
+		/// <summary>
+		/// Takes off everything the NPC is wearing.
+		/// </summary>
+		public void ClearWearables()
+		{
+			foreach (GameObject worn in _worn.Values)
+			{
+				if (worn != null)
+					Destroy(worn);
+			}
+			_worn.Clear();
+		}
+
+		/// <summary>
+		/// Take off a specific wearable.
+		/// </summary>
+		/// <param name="type">Wearable type to remove</param>
+		public void TakeOff(wearableType type)
+		{
+			if (_worn.TryGetValue(SlotOf(type), out GameObject current) && current != null)
+				Destroy(current);
+		}
+
+		// Hats, caps and helmets all go on top of the head, so only one of them can be worn at a time.
+		private static wearableType SlotOf(wearableType type) =>
+			type == wearableType.cap || type == wearableType.helmet ? wearableType.hat : type;
+
+		private void SetWearables(List<WornItem> items)
+		{
+			ClearWearables();
+
+			if (items == null)
+				return;
+
+			foreach (WornItem item in items)
+				Wear(item.Item, item.Variant);
+		}
+
+		private Transform GetWearableAnchor(wearableType type)
+		{
+			if (_wearableAnchors.TryGetValue(type, out Transform anchor))
+				return anchor;
+
+			anchor = new GameObject($"Wear_{type}").transform;
+			anchor.SetParent(Head, false);
+			Logging.LogDebug($"Head bone world scale is {Head.lossyScale}.");
+			ApplyWearableAnchor(type, anchor);
+			_wearableAnchors[type] = anchor;
+			return anchor;
+		}
+
+		private void ApplyWearableAnchor(wearableType type, Transform anchor)
+		{
+			WearableAnchor placement = WearableAnchors.Get(type);
+
+			// The head bone can carry a large scale that children inherit, so cancel it out to keep the anchor in plain world units.
+			Vector3 headScale = Head.lossyScale;
+			Vector3 inverseScale = new Vector3(1f / headScale.x, 1f / headScale.y, 1f / headScale.z);
+
+			anchor.localScale = inverseScale;
+			anchor.localPosition = Vector3.Scale(placement.Position, inverseScale);
+			anchor.localRotation = Quaternion.Euler(placement.Rotation);
+		}
+
+		// Lets the anchors be nudged while the game is running.
+		private void SyncWearableAnchors()
+		{
+			if (_anchorVersion == WearableAnchors.Version)
+				return;
+			_anchorVersion = WearableAnchors.Version;
+
+			foreach (var pair in _wearableAnchors)
+				ApplyWearableAnchor(pair.Key, pair.Value);
 		}
 
 		/// <summary>
@@ -135,6 +238,8 @@ namespace NPCs.Common
 
 		private void LateUpdate()
 		{
+			SyncWearableAnchors();
+
 			if (_ragdolled)
 				return;
 
