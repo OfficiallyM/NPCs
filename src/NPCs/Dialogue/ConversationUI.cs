@@ -155,7 +155,7 @@ namespace NPCs.Dialogue
 				// Fall back to showing the NPC's line here when the player can't see the speech box above their head.
 				if (_activeSpeech != null && !_activeSpeech.IsVisibleToPlayer)
 				{
-					GUILayout.Label(_activeRunner.ResolveText(node.Text), "LabelSubHeader");
+					GUILayout.Label(_activeRunner.ResolveText(_activeRunner.CurrentText), "LabelSubHeader");
 					GUILayout.Space(5f);
 				}
 

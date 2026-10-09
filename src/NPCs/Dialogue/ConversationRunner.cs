@@ -34,6 +34,11 @@ namespace NPCs.Dialogue
 		public ConversationNode CurrentNode => _currentNode;
 
 		/// <summary>
+		/// The line chosen for the current node.
+		/// </summary>
+		public string CurrentText { get; private set; }
+
+		/// <summary>
 		/// Fired when the current node changes.
 		/// </summary>
 		public event Action<ConversationNode> OnNodeChanged;
@@ -138,7 +143,7 @@ namespace NPCs.Dialogue
 			if (node.Options != null && node.Options.Count > 0 && node.Next != null)
 				Logging.LogWarning($"Node '{node.Id}' has both options and a next node defined. Options will be used.");
 
-			node.RollText();
+			CurrentText = node.RollText();
 			_currentNode = node;
 			OnNodeChanged?.Invoke(_currentNode);
 
@@ -164,6 +169,7 @@ namespace NPCs.Dialogue
 		public void EndConversation()
 		{
 			_currentNode = null;
+			CurrentText = null;
 			_conversation = null;
 			ConversationUI.ClearActiveRunner();
 			OnConversationEnded?.Invoke();

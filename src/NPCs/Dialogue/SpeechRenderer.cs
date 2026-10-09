@@ -26,12 +26,12 @@ namespace NPCs.Dialogue
 			_display.SetMaxWidth(600);
 
 			_runner.OnNodeChanged += node => _display.RenderMessage(
-				new WorldspaceDisplay.Message(new List<string>() { _runner.ResolveText(node.Text) })
+				new WorldspaceDisplay.Message(new List<string>() { _runner.ResolveText(_runner.CurrentText) })
 			);
 			_runner.OnConversationEnding += node =>
 			{
 				_lingering = true;
-				_display.ClearMessageAfterDelay(_runner.ResolveText(node.Text), 0.03f);
+				_display.ClearMessageAfterDelay(_runner.ResolveText(_runner.CurrentText), 0.03f);
 			};
 
 			_runner.OnConversationEnded += () =>
@@ -48,7 +48,7 @@ namespace NPCs.Dialogue
 			{
 				ConversationNode node = _runner.CurrentNode;
 				if (node == null) return;
-				_display.ClearMessageAfterDelay(_runner.ResolveText(node.Text), 0.03f);
+				_display.ClearMessageAfterDelay(_runner.ResolveText(_runner.CurrentText), 0.03f);
 			};
 
 			_runner.Npc.OnDeath += () =>

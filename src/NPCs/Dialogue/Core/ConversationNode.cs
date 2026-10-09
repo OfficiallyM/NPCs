@@ -20,23 +20,15 @@ namespace NPCs.Dialogue.Core
 		public List<string> TextOptions { get; set; }
 
 		/// <summary>
-		/// The text selected for this node entry. Populated by the runner on node entry.
+		/// Picks a random line from <see cref="TextOptions"/>.
 		/// </summary>
-		[JsonIgnore]
-		public string Text { get; private set; }
-
-		/// <summary>
-		/// Selects a random line from <see cref="TextOptions"/> and stores it in <see cref="Text"/>.
-		/// </summary>
-		public void RollText()
+		/// <returns>The chosen line, or an empty string if the node has none</returns>
+		public string RollText()
 		{
 			if (TextOptions == null || TextOptions.Count == 0)
-			{
-				Text = string.Empty;
-				return;
-			}
+				return string.Empty;
 
-			Text = TextOptions[UnityEngine.Random.Range(0, TextOptions.Count)];
+			return TextOptions[UnityEngine.Random.Range(0, TextOptions.Count)];
 		}
 
 		/// <summary>
