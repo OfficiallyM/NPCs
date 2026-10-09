@@ -18,7 +18,7 @@ namespace NPCs.Appearance
 
 		static WearableAnchors()
 		{
-			_anchors[wearableType.glasses] = new WearableAnchor { Position = new Vector3(0f, 0.025f, 0.125f) };
+			_anchors[wearableType.glasses] = new WearableAnchor { Position = new Vector3(0f, 0.025f, 0.1f) };
 			_anchors[wearableType.hat] = new WearableAnchor { Position = new Vector3(0f, 0.02f, 0.1f) };
 			_anchors[wearableType.cap] = new WearableAnchor { Position = new Vector3(-0.003f, 0.04f, 0.07f) };
 			_anchors[wearableType.helmet] = new WearableAnchor { Position = new Vector3(0f, -0.12f, 0f), Rotation = new Vector3(0f, 180f, 0f) };
