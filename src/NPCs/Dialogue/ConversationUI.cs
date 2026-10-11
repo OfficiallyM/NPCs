@@ -139,22 +139,27 @@ namespace NPCs.Dialogue
 			Rect animatedRect = Animator.Slide("mainUI", targetRect, Animator.SlideDirection.Bottom);
 			if ((!HasActiveConversation || HasBackgroundConversation) && Animator.IsIdle("mainUI")) return;
 
+			// Clicks are acted on once the layout is done, because they can end the conversation and clear the active runner mid-draw.
+			ConversationRunner runner = _activeRunner;
+			int selectedOption = -1;
+			bool advance = false;
+
 			GUILayout.BeginArea(animatedRect, GUIContent.none, "box");
 			GUILayout.BeginHorizontal("box");
 			GUILayout.Space(5f);
-			GUILayout.Label(_activeRunner?.GetVariable("npcName") ?? "Stranger", "LabelHeader", GUILayout.ExpandWidth(false));
+			GUILayout.Label(runner?.GetVariable("npcName") ?? "Stranger", "LabelHeader", GUILayout.ExpandWidth(false));
 			GUILayout.EndHorizontal();
 			GUILayout.Space(10f);
-			ConversationNode node = _activeRunner?.CurrentNode;
+			ConversationNode node = runner?.CurrentNode;
 			bool hasOptions = node?.Options != null && node.Options.Count > 0;
 
 			_scroll = GUILayout.BeginScrollView(_scroll);
 			if (node != null)
 			{
 				// Fall back to showing the NPC's line here when the player can't see the speech box above their head.
-				if (_activeSpeech != null && !_activeSpeech.IsVisibleToPlayer && !string.IsNullOrEmpty(_activeRunner?.CurrentText))
+				if (_activeSpeech != null && !_activeSpeech.IsVisibleToPlayer && !string.IsNullOrEmpty(runner?.CurrentText))
 				{
-					GUILayout.Label(_activeRunner.ResolveText(_activeRunner.CurrentText), "LabelSubHeader");
+					GUILayout.Label(runner.ResolveText(runner.CurrentText), "LabelSubHeader");
 					GUILayout.Space(5f);
 				}
 
@@ -162,12 +167,12 @@ namespace NPCs.Dialogue
 				{
 					for (int i = 0; i < node.Options.Count; i++)
 					{
-						if (!_activeRunner.IsOptionAvailable(node.Options[i])) continue;
+						if (!runner.IsOptionAvailable(node.Options[i])) continue;
 
 						GUILayout.BeginHorizontal();
 						GUILayout.FlexibleSpace();
-						if (GUILayout.Button(_activeRunner.ResolveText(node.Options[i].Text), GUILayout.MaxWidth(width - 40f), GUILayout.MaxHeight(35f)))
-							_activeRunner.SelectOption(i);
+						if (GUILayout.Button(runner.ResolveText(node.Options[i].Text), GUILayout.MaxWidth(width - 40f), GUILayout.MaxHeight(35f)))
+							selectedOption = i;
 						GUILayout.FlexibleSpace();
 						GUILayout.EndHorizontal();
 					}
@@ -177,7 +182,7 @@ namespace NPCs.Dialogue
 					GUILayout.BeginHorizontal();
 					GUILayout.FlexibleSpace();
 					if (GUILayout.Button("Continue...", GUILayout.MaxWidth(width - 40f), GUILayout.MaxHeight(35f)))
-						_activeRunner.Advance();
+						advance = true;
 					GUILayout.FlexibleSpace();
 					GUILayout.EndHorizontal();
 				}
@@ -187,6 +192,11 @@ namespace NPCs.Dialogue
 
 			// Reset back to default Unity skin to avoid styling bleeding to other UI mods.
 			GUI.skin = null;
+
+			if (selectedOption >= 0)
+				runner.SelectOption(selectedOption);
+			else if (advance)
+				runner.Advance();
 		}
 	}
 }
