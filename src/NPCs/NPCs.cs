@@ -3,6 +3,7 @@ using NPCs.Harmony;
 using NPCs.Trading;
 using NPCs.Trading.Value;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using TLDLoader;
 using UnityEngine;
@@ -73,10 +74,29 @@ namespace NPCs
 			DialogueRegistry.Initialise();
 			ItemRegistry.Initialise();
 
-			DialogueRegistry.RegisterAction("open_trade", runner => {
+			DialogueRegistry.RegisterAction("open_trade", (runner, argument) => {
 				TradeSession session = runner.GetComponent<TradeSession>();
 				if (session == null) return;
 				session.Begin();
+			});
+
+			DialogueRegistry.RegisterAction("give_item", (runner, argument) =>
+			{
+				if (string.IsNullOrEmpty(argument)) return;
+				GameObject prefab = null;
+				switch (argument)
+				{
+					case "silver":
+						prefab = GetItem(1000);
+						break;
+					default:
+						prefab = itemdatabase.d.items.FirstOrDefault(i => i != null && i.name.ToLowerInvariant().Contains(argument));
+						break;
+				}
+
+				if (prefab == null) return;
+				Vector3 position = runner.transform.position + runner.transform.forward * 1f + Vector3.up * 1f;
+				GameObject.Instantiate(prefab, position, Quaternion.identity);
 			});
 
 			DialogueRegistry.RegisterCondition("player_in_vehicle", (runner, argument) => mainscript.M.player.Car != null);

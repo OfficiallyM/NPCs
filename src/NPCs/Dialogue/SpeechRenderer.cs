@@ -25,9 +25,13 @@ namespace NPCs.Dialogue
 			_display.SetFontSize(25);
 			_display.SetMaxWidth(600);
 
-			_runner.OnNodeChanged += node => _display.RenderMessage(
-				new WorldspaceDisplay.Message(new List<string>() { _runner.ResolveText(_runner.CurrentText) })
-			);
+			_runner.OnNodeChanged += node =>
+			{
+				// Nodes with no text leave whatever was being said on screen.
+				if (string.IsNullOrEmpty(_runner.CurrentText)) return;
+
+				_display.RenderMessage(new WorldspaceDisplay.Message(new List<string>() { _runner.ResolveText(_runner.CurrentText) }));
+			};
 			_runner.OnConversationEnding += node =>
 			{
 				_lingering = true;

@@ -19,6 +19,10 @@
 					"next": [ "haggle" ]
 				},
 				{
+					"text": "Any chance of a freebie?",
+					"next": [ "freebie_accepted", "freebie_rejected" ]
+				},
+				{
 					"text": "Just passing through.",
 					"next": [ "farewell" ]
 				}
@@ -46,6 +50,17 @@
 					"next": [ "farewell" ]
 				}
 			]
+		},
+		"freebie_accepted": {
+			"text": [ "Sure, here's a silver." ],
+			"next": null,
+			"actions": [ "give_item:silver" ],
+			"weight": 20
+		},
+		"freebie_rejected": {
+			"text": [ "No chance." ],
+			"next": null,
+			"weight": 80
 		},
 		"farewell": {
 			"text": [ "Suit yourself. Road's long." ],

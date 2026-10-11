@@ -10,15 +10,17 @@ namespace NPCs.Dialogue
 		private const string NEGATE_PREFIX = "not:";
 
 		private static Dictionary<string, Conversation> _conversations;
-		private static Dictionary<string, Action<ConversationRunner>> _actions;
+		private static Dictionary<string, Action<ConversationRunner, string>> _actions;
 		private static Dictionary<string, Func<ConversationRunner, string, bool>> _conditions;
+		private static HashSet<string> _unknownActions;
 		private static HashSet<string> _unknownConditions;
 
 		public static void Initialise()
 		{
 			_conversations = new Dictionary<string, Conversation>();
-			_actions = new Dictionary<string, Action<ConversationRunner>>();
+			_actions = new Dictionary<string, Action<ConversationRunner, string>>();
 			_conditions = new Dictionary<string, Func<ConversationRunner, string, bool>>();
+			_unknownActions = new HashSet<string>();
 			_unknownConditions = new HashSet<string>();
 
 			DialogueLoader.Load();
@@ -39,8 +41,8 @@ namespace NPCs.Dialogue
 		/// Registers a named action handler for use in conversation options.
 		/// </summary>
 		/// <param name="key">Action name.</param>
-		/// <param name="handler">Action to perform when called.</param>
-		public static void RegisterAction(string key, Action<ConversationRunner> handler)
+		/// <param name="handler">Action to perform when called. Receives the runner and the argument written after the colon in the key, or null if there wasn't one.</param>
+		public static void RegisterAction(string key, Action<ConversationRunner, string> handler)
 		{
 			if (string.IsNullOrEmpty(key) || handler == null) return;
 			_actions[key] = handler;
@@ -92,14 +94,24 @@ namespace NPCs.Dialogue
 		}
 
 		/// <summary>
-		/// Triggers the action registered under the given key, if any.
+		/// Triggers the action named by the given key, if any.
 		/// </summary>
-		/// <param name="key">Action key to trigger.</param>
+		/// <param name="key">Action key to trigger, optionally followed by a colon and an argument such as "give_item:ggold".</param>
+		/// <param name="runner">Runner the action is triggered for.</param>
 		public static void TriggerAction(string key, ConversationRunner runner)
 		{
 			if (string.IsNullOrEmpty(key)) return;
-			if (_actions.TryGetValue(key, out var handler))
-				handler.Invoke(runner);
+
+			ParseKey(key, out string name, out string argument);
+
+			if (_actions.TryGetValue(name, out var handler))
+			{
+				handler.Invoke(runner, argument);
+				return;
+			}
+
+			if (_unknownActions.Add(name))
+				Logging.LogWarning($"Unknown dialogue action '{name}'.");
 		}
 
 		private static bool Evaluate(string expression, ConversationRunner runner)

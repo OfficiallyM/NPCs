@@ -64,7 +64,7 @@ namespace NPCs.Trading
 			};
 
 			_goldObj = itemdatabase.d.items.FirstOrDefault(i => i != null && i.name == "gold");
-			_silverObj = NPCs.I.GetItem(100);
+			_silverObj = NPCs.I.GetItem(1000);
 		}
 
 		/// <summary>

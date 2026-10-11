@@ -16,7 +16,10 @@ namespace NPCs.Dialogue
 		/// <summary>
 		/// Reserved node ID that hides the conversation and keeps it running behind the scenes.
 		/// </summary>
-		public const string BACKGROUND_NODE = "@background";
+		private const string BACKGROUND_NODE = "@background";
+
+		// Stops nodes without text that point at each other from looping forever.
+		private const int MAX_AUTO_ADVANCE_DEPTH = 32;
 
 		public string ConversationId;
 		public float ConversationRange = 5f;
@@ -27,6 +30,8 @@ namespace NPCs.Dialogue
 		private ConversationNode _currentNode;
 		private Dictionary<string, string> _variables;
 		private Transform _playerTransform;
+		private int _nodeEntries;
+		private int _autoAdvanceDepth;
 
 		/// <summary>
 		/// Whether a conversation is currently active.
@@ -184,6 +189,7 @@ namespace NPCs.Dialogue
 			// Support for special reserved keywords in nodeId.
 			if (nodeId == BACKGROUND_NODE)
 			{
+				_nodeEntries++;
 				ConversationUI.Hide();
 				OnBackground?.Invoke();
 				return;
@@ -202,7 +208,13 @@ namespace NPCs.Dialogue
 
 			CurrentText = node.RollText();
 			_currentNode = node;
+			int entry = ++_nodeEntries;
 			OnNodeChanged?.Invoke(_currentNode);
+
+			RunActions(node, entry);
+
+			// An action moved the conversation on or ended it, so this node's own flow no longer applies.
+			if (entry != _nodeEntries) return;
 
 			bool hasOptions = node.Options != null && node.Options.Count > 0;
 			if (hasOptions) return;
@@ -215,10 +227,41 @@ namespace NPCs.Dialogue
 				return;
 			}
 
-			// Automatically trigger a continue for background conversations.
+			// Nodes with nothing to say have nothing to wait on, so they carry straight on.
+			// Background conversations also continue by themselves.
+			bool silent = string.IsNullOrEmpty(CurrentText);
 			bool onlyBackground = node.Next.Count == 1 && node.Next[0] == BACKGROUND_NODE;
-			if (onlyBackground && ConversationUI.HasBackgroundConversation)
+			if (!silent && !(onlyBackground && ConversationUI.HasBackgroundConversation)) return;
+
+			if (_autoAdvanceDepth >= MAX_AUTO_ADVANCE_DEPTH)
+			{
+				Logging.LogError($"Conversation '{_conversation.Id}' kept advancing without stopping at node '{node.Id}', ending it.");
+				EndConversation();
+				return;
+			}
+
+			_autoAdvanceDepth++;
+			try
+			{
 				AdvanceToAny(node.Next);
+			}
+			finally
+			{
+				_autoAdvanceDepth--;
+			}
+		}
+
+		private void RunActions(ConversationNode node, int entry)
+		{
+			if (node.Actions == null) return;
+
+			foreach (string action in node.Actions)
+			{
+				DialogueRegistry.TriggerAction(action, this);
+
+				// Later actions would belong to a node the conversation has already left.
+				if (entry != _nodeEntries) return;
+			}
 		}
 
 		private bool IsAvailable(string nodeId, out ConversationNode node)
@@ -282,6 +325,7 @@ namespace NPCs.Dialogue
 		/// </summary>
 		public void EndConversation()
 		{
+			_nodeEntries++;
 			_currentNode = null;
 			CurrentText = null;
 			_conversation = null;

@@ -32,6 +32,12 @@ namespace NPCs.Dialogue.Core
 		}
 
 		/// <summary>
+		/// Registered action keys, optionally with an argument after a colon, run in order when the node is entered.
+		/// </summary>
+		/// <remarks>Run after the line is shown. If one moves the conversation on, the rest are skipped.</remarks>
+		public List<string> Actions { get; set; }
+
+		/// <summary>
 		/// Player-selectable responses.
 		/// </summary>
 		public List<ConversationOption> Options { get; set; }
