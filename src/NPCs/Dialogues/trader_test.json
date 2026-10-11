@@ -20,6 +20,8 @@
 				},
 				{
 					"text": "Any chance of a freebie?",
+					"conditions": [ "not:memory:freebie_tried" ],
+					"action": "set_memory:freebie_tried=true",
 					"next": [ "freebie_accepted", "freebie_rejected" ]
 				},
 				{

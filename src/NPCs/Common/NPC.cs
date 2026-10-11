@@ -19,6 +19,8 @@ namespace NPCs.Common
 		public NPCBody Body { get; private set; }
 		public NPCAppearance Appearance { get; private set; }
 		public Gender Gender { get; private set; }
+		// TODO: Save once we have a save system.
+		public NPCMemory Memory { get; } = new NPCMemory();
 		public event Action OnDeath;
 		public bool IsDead = false;
 
