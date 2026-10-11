@@ -14,9 +14,9 @@ namespace NPCs.Dialogue.Core
 		public string Id { get; set; }
 
 		/// <summary>
-		/// The node ID to start the conversation from. 
+		/// The node IDs the conversation can start from. One is picked from those whose conditions pass.
 		/// </summary>
-		public string Entry { get; set; }
+		public List<string> Entry { get; set; }
 
 		/// <summary>
 		/// All nodes in this conversation, keyed by node ID.

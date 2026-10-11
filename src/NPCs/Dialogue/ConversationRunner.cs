@@ -13,6 +13,11 @@ namespace NPCs.Dialogue
 	/// </summary>
 	public class ConversationRunner : MonoBehaviour
 	{
+		/// <summary>
+		/// Reserved node ID that hides the conversation and keeps it running behind the scenes.
+		/// </summary>
+		public const string BACKGROUND_NODE = "@background";
+
 		public string ConversationId;
 		public float ConversationRange = 5f;
 		public event Action OnBackground;
@@ -72,8 +77,11 @@ namespace NPCs.Dialogue
 			}
 
 			_conversation = conversation;
-			AdvanceTo(conversation.Entry);
-			ConversationUI.SetActiveRunner(this);
+			AdvanceToAny(conversation.Entry);
+
+			// Nothing is active if no entry node was available or the first one ended straight away.
+			if (IsActive)
+				ConversationUI.SetActiveRunner(this);
 		}
 
 		/// <summary>
@@ -91,10 +99,34 @@ namespace NPCs.Dialogue
 
 			ConversationOption option = _currentNode.Options[optionIndex];
 
+			// Conditions can change between the option being drawn and clicked.
+			if (!IsOptionAvailable(option)) return;
+
 			if (!string.IsNullOrEmpty(option.Action))
 				DialogueRegistry.TriggerAction(option.Action, this);
 
-			AdvanceTo(option.Next);
+			AdvanceToAny(option.Next);
+		}
+
+		/// <summary>
+		/// Whether an option should currently be shown.
+		/// </summary>
+		/// <param name="option">Option from the current node.</param>
+		/// <returns>True if its conditions pass and, if it leads somewhere, at least one destination is available</returns>
+		public bool IsOptionAvailable(ConversationOption option)
+		{
+			if (!DialogueRegistry.ConditionPasses(option, this)) return false;
+
+			// Closes the conversation, so there's nothing to be unavailable.
+			if (option.Next == null || option.Next.Count == 0) return true;
+
+			foreach (string nodeId in option.Next)
+			{
+				if (IsAvailable(nodeId, out _))
+					return true;
+			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -110,11 +142,35 @@ namespace NPCs.Dialogue
 				return;
 			}
 
-			AdvanceTo(_currentNode.Next);
+			AdvanceToAny(_currentNode.Next);
 		}
 
 		/// <summary>
-		/// Advance conversation to a specific tree node.
+		/// Advances to one of several candidate nodes. Only available nodes are considered, the highest priority among them
+		/// wins, and ties are broken by weight.
+		/// </summary>
+		/// <param name="candidates">Node IDs to choose between. Empty or null closes the conversation.</param>
+		public void AdvanceToAny(List<string> candidates)
+		{
+			if (candidates == null || candidates.Count == 0)
+			{
+				EndConversation();
+				return;
+			}
+
+			string chosen = PickCandidate(candidates);
+			if (chosen == null)
+			{
+				Logging.LogWarning($"None of [{string.Join(", ", candidates)}] are available in conversation '{_conversation?.Id}'.");
+				EndConversation();
+				return;
+			}
+
+			AdvanceTo(chosen);
+		}
+
+		/// <summary>
+		/// Advance conversation to a specific tree node, regardless of its conditions.
 		/// </summary>
 		/// <param name="nodeId">Conversation node to advance to.</param>
 		public void AdvanceTo(string nodeId)
@@ -126,7 +182,7 @@ namespace NPCs.Dialogue
 			}
 
 			// Support for special reserved keywords in nodeId.
-			if (nodeId == "@background")
+			if (nodeId == BACKGROUND_NODE)
 			{
 				ConversationUI.Hide();
 				OnBackground?.Invoke();
@@ -140,7 +196,8 @@ namespace NPCs.Dialogue
 				return;
 			}
 
-			if (node.Options != null && node.Options.Count > 0 && node.Next != null)
+			bool hasNext = node.Next != null && node.Next.Count > 0;
+			if (node.Options != null && node.Options.Count > 0 && hasNext)
 				Logging.LogWarning($"Node '{node.Id}' has both options and a next node defined. Options will be used.");
 
 			CurrentText = node.RollText();
@@ -151,7 +208,7 @@ namespace NPCs.Dialogue
 			if (hasOptions) return;
 
 			// Terminal node, fade out the line and end the conversation.
-			if (!hasOptions && string.IsNullOrEmpty(node.Next))
+			if (!hasNext)
 			{
 				OnConversationEnding?.Invoke(node);
 				EndConversation();
@@ -159,8 +216,65 @@ namespace NPCs.Dialogue
 			}
 
 			// Automatically trigger a continue for background conversations.
-			if (!hasOptions && node.Next == "@background" && ConversationUI.HasBackgroundConversation)
-				AdvanceTo(node.Next);
+			bool onlyBackground = node.Next.Count == 1 && node.Next[0] == BACKGROUND_NODE;
+			if (onlyBackground && ConversationUI.HasBackgroundConversation)
+				AdvanceToAny(node.Next);
+		}
+
+		private bool IsAvailable(string nodeId, out ConversationNode node)
+		{
+			node = null;
+
+			// Background isn't a real node, so it is always available.
+			if (nodeId == BACKGROUND_NODE) return true;
+
+			return _conversation?.Nodes != null
+				&& _conversation.Nodes.TryGetValue(nodeId, out node)
+				&& DialogueRegistry.ConditionPasses(node, this);
+		}
+
+		private string PickCandidate(List<string> candidates)
+		{
+			int bestPriority = int.MinValue;
+			var pool = new List<KeyValuePair<string, float>>();
+
+			foreach (string nodeId in candidates)
+			{
+				if (!IsAvailable(nodeId, out ConversationNode node)) continue;
+
+				int priority = node?.Priority ?? 0;
+				float weight = node?.Weight ?? 1f;
+
+				if (priority > bestPriority)
+				{
+					bestPriority = priority;
+					pool.Clear();
+				}
+
+				if (priority == bestPriority)
+					pool.Add(new KeyValuePair<string, float>(nodeId, Mathf.Max(0f, weight)));
+			}
+
+			if (pool.Count == 0) return null;
+
+			float total = 0f;
+			foreach (var candidate in pool)
+				total += candidate.Value;
+
+			// All weights at zero would otherwise leave nothing to pick.
+			if (total <= 0f)
+				return pool[UnityEngine.Random.Range(0, pool.Count)].Key;
+
+			float roll = UnityEngine.Random.Range(0f, total);
+			float cumulative = 0f;
+			foreach (var candidate in pool)
+			{
+				cumulative += candidate.Value;
+				if (roll < cumulative)
+					return candidate.Key;
+			}
+
+			return pool[pool.Count - 1].Key;
 		}
 
 		/// <summary>

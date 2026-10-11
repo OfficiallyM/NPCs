@@ -1,7 +1,6 @@
 ﻿using NPCs.Common;
 using NPCs.Dialogue.Core;
 using NPCs.Trading;
-using NPCs.Utilities;
 using NPCs.Utilities.UI;
 using UnityEngine;
 using Animator = NPCs.Utilities.UI.Animator;
@@ -163,6 +162,8 @@ namespace NPCs.Dialogue
 				{
 					for (int i = 0; i < node.Options.Count; i++)
 					{
+						if (!_activeRunner.IsOptionAvailable(node.Options[i])) continue;
+
 						GUILayout.BeginHorizontal();
 						GUILayout.FlexibleSpace();
 						if (GUILayout.Button(_activeRunner.ResolveText(node.Options[i].Text), GUILayout.MaxWidth(width - 40f), GUILayout.MaxHeight(35f)))

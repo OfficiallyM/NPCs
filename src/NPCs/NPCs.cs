@@ -1,11 +1,8 @@
-﻿using NPCs.Common;
-using NPCs.Dialogue;
+﻿using NPCs.Dialogue;
 using NPCs.Harmony;
 using NPCs.Trading;
 using NPCs.Trading.Value;
-using NPCs.Utilities;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using TLDLoader;
 using UnityEngine;
@@ -81,6 +78,8 @@ namespace NPCs
 				if (session == null) return;
 				session.Begin();
 			});
+
+			DialogueRegistry.RegisterCondition("player_in_vehicle", (runner, argument) => mainscript.M.player.Car != null);
 
 			RoadGenPlaceOne.HasInitalised = false;
 		}

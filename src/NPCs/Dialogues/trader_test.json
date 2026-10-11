@@ -1,6 +1,6 @@
 {
 	"id": "trader_test",
-	"entry": "root",
+	"entry": [ "root", "root_in_vehicle" ],
 	"nodes": {
 		"root": {
 			"text": [
@@ -12,21 +12,26 @@
 				{
 					"text": "Show me what you've got. [Start a trade]",
 					"action": "open_trade",
-					"next": "@background"
+					"next": [ "@background" ]
 				},
 				{
 					"text": "What's your best price?",
-					"next": "haggle"
+					"next": [ "haggle" ]
 				},
 				{
 					"text": "Just passing through.",
-					"next": "farewell"
+					"next": [ "farewell" ]
 				}
 			]
 		},
+		"root_in_vehicle": {
+			"text": [ "At least get out of your vehicle if you want to trade" ],
+			"conditions": [ "player_in_vehicle" ],
+			"priority": 1
+		},
 		"haggle": {
 			"text": [ "My prices are fair. You won't find better out here." ],
-			"next": "haggle_response"
+			"next": [ "haggle_response" ]
 		},
 		"haggle_response": {
 			"text": [ "So. You buying or not?" ],
@@ -34,11 +39,11 @@
 				{
 					"text": "Fine. Show me. [Start a trade]",
 					"action": "open_trade",
-					"next": "@background"
+					"next": [ "@background" ]
 				},
 				{
 					"text": "Never mind.",
-					"next": "farewell"
+					"next": [ "farewell" ]
 				}
 			]
 		},
@@ -56,11 +61,11 @@
 		},
 		"trade_rejected": {
 			"text": [ "Do you take me for an idiot or something?" ],
-			"next": "@background"
+			"next": [ "@background" ]
 		},
 		"trade_empty": {
 			"text": [ "Well I ain't giving you anything for free." ],
-			"next": "@background"
+			"next": [ "@background" ]
 		}
 	}
 }

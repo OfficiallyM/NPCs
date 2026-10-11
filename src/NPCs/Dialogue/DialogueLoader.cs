@@ -48,7 +48,7 @@ namespace NPCs.Dialogue
 				return;
 			}
 
-			if (string.IsNullOrEmpty(conversation.Entry))
+			if (conversation.Entry == null || conversation.Entry.Count == 0)
 			{
 				Logging.LogWarning($"Conversation '{conversation.Id}' has no entry node defined, skipping.");
 				return;
