@@ -14,6 +14,10 @@ namespace NPCs.Animation
         private const float MinimumDuration = 0.1f;
         private const float MinimumArmLength = 0.001f;
         private const float MinimumWeight = 0.001f;
+        private const float DefaultHeadLookLerp = 5f;
+        private const float LookDistance = 5f;
+        private const float LookHeightFallback = 1.6f;
+        private const float MinimumLookDistance = 2f;
 
         private sealed class ArmState
         {
@@ -45,9 +49,21 @@ namespace NPCs.Animation
         private NPCAnimationProfile _profile = new NPCAnimationProfile();
         private readonly ArmState _left = new ArmState();
         private readonly ArmState _right = new ArmState();
+        private NPCHeadLook _headLook;
+        private Transform _head;
+        private Vector3 _lookTarget;
+        private NPCHeadGesture _headGesture;
+        private float _headGestureElapsed;
         private bool _initialised;
 
         public bool IsReady => _left.Ready || _right.Ready;
+
+        /// <summary>
+        /// The world point the head is actually looking at, which trails the point it was asked to look at.
+        /// </summary>
+        public Vector3 LookPoint => _headLook != null ? _headLook.Current : transform.position + transform.forward * LookDistance;
+
+        private Vector3 HeadPosition => _head != null ? _head.position : transform.position + Vector3.up * LookHeightFallback;
 
         public void Initialise(NPC npc, NPCAnimationProfile profile)
         {
@@ -69,6 +85,130 @@ namespace NPCs.Animation
 
             if (!IsReady)
                 Logging.LogWarning("Could not bind either arm for NPC animation on " + name + ".");
+
+            BindHead();
+        }
+
+        // The head's look point starts at the world origin, and the NPC may not be in place yet when this is built.
+        // Starting here, once everything is placed, stops the head swinging round on the first frame.
+        private void Start()
+        {
+            LookAhead();
+            SnapLook();
+        }
+
+        /// <summary>
+        /// Turns the head towards a world point. It lerps there on its own, so this only needs to move the point.
+        /// </summary>
+        public void LookAt(Vector3 point)
+        {
+            _lookTarget = point;
+        }
+
+        public void LookAhead()
+        {
+            LookAt(HeadPosition + transform.forward * LookDistance);
+        }
+
+        public NPCHeadGesture CurrentHeadGesture => _headGesture;
+
+        public void Nod()
+        {
+            PlayHeadGesture(NPCHeadGesture.Nod);
+        }
+
+        public void ShakeHead()
+        {
+            PlayHeadGesture(NPCHeadGesture.Shake);
+        }
+
+        /// <summary>
+        /// Swings the gaze around whatever the head is looking at. The look point still follows the AI while this plays.
+        /// </summary>
+        public void PlayHeadGesture(NPCHeadGesture gesture)
+        {
+            _headGesture = gesture;
+            _headGestureElapsed = 0f;
+        }
+
+        public void StopHeadGesture()
+        {
+            PlayHeadGesture(NPCHeadGesture.None);
+        }
+
+        /// <summary>
+        /// Jumps the head straight to where it is meant to look, so there is no swing.
+        /// </summary>
+        public void SnapLook()
+        {
+            if (_headLook == null)
+                return;
+
+            _headLook.Target = _lookTarget;
+            _headLook.Snap();
+        }
+
+        // Rotates the look point away from the straight-line view of it. Positive pitch looks down and positive yaw looks right.
+        private Vector3 OffsetLook(Vector3 point, float pitch, float yaw)
+        {
+            Vector3 head = HeadPosition;
+            Vector3 toPoint = point - head;
+            float distance = Mathf.Max(toPoint.magnitude, MinimumLookDistance);
+            Vector3 direction = toPoint.sqrMagnitude > 0.0001f ? toPoint.normalized : transform.forward;
+
+            Vector3 right = Vector3.Cross(Vector3.up, direction);
+            right = right.sqrMagnitude > 0.0001f ? right.normalized : transform.right;
+
+            direction = Quaternion.AngleAxis(yaw, Vector3.up) * Quaternion.AngleAxis(pitch, right) * direction;
+            return head + direction * distance;
+        }
+
+        private Vector3 ApplyHeadGesture(Vector3 point, float deltaTime)
+        {
+            if (_headGesture == NPCHeadGesture.None)
+                return point;
+
+            bool nod = _headGesture == NPCHeadGesture.Nod;
+            float duration = Mathf.Max(MinimumDuration, nod ? _profile.NodDuration : _profile.ShakeDuration);
+
+            _headGestureElapsed += deltaTime;
+            if (_headGestureElapsed >= duration)
+            {
+                _headGesture = NPCHeadGesture.None;
+                return point;
+            }
+
+            // Whole cycles, so the swing starts and ends exactly on the point being looked at.
+            float cycles = Mathf.Max(0.1f, _profile.HeadGestureCycles);
+            float amplitude = nod ? _profile.NodAmplitude : _profile.ShakeAmplitude;
+            float swing = amplitude * Mathf.Sin(_headGestureElapsed / duration * Mathf.PI * 2f * cycles);
+
+            return nod ? OffsetLook(point, swing, 0f) : OffsetLook(point, 0f, swing);
+        }
+
+        private void BindHead()
+        {
+            _head = _body.Head;
+
+            if (!_body.TryGetBone("neck_01", out Transform neck)
+                || !_body.TryGetNeutralRotation(neck, out Quaternion neckRest)
+                || !_body.TryGetNeutralRotation(_head, out Quaternion headRest))
+            {
+                Logging.LogWarning("Could not bind the head for NPC animation on " + name + ".");
+                return;
+            }
+
+            _headLook = new NPCHeadLook(transform, neck, _head, neckRest, headRest, ResolveHeadLookLerp());
+        }
+
+        private float ResolveHeadLookLerp()
+        {
+            if (_profile.HeadLookLerp > 0f)
+                return _profile.HeadLookLerp;
+
+            // Matches how fast the vanilla NPCs turn their heads.
+            newAiAnim vanilla = itemdatabase.d.gmunkas01.GetComponentInChildren<newAiAnim>(true);
+            return vanilla != null ? vanilla.lookLerp : DefaultHeadLookLerp;
         }
 
         public bool IsHandReady(NPCHand hand)
@@ -235,6 +375,7 @@ namespace NPCs.Animation
             {
                 ResetGestureState(_left);
                 ResetGestureState(_right);
+                _headGesture = NPCHeadGesture.None;
                 return;
             }
 
@@ -247,6 +388,13 @@ namespace NPCs.Animation
             float deltaTime = Mathf.Max(0f, Time.deltaTime);
             EvaluateArm(_left, deltaTime);
             EvaluateArm(_right, deltaTime);
+
+            if (_headLook != null)
+            {
+                _headLook.Target = ApplyHeadGesture(_lookTarget, deltaTime);
+                _headLook.Tick(deltaTime);
+                _headLook.Apply();
+            }
         }
 
         private void EvaluateArm(ArmState arm, float deltaTime)

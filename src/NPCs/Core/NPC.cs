@@ -34,7 +34,7 @@ namespace NPCs.Core
 
 		protected virtual void Awake()
 		{
-			// The AI needs the body's head look, so the body goes first.
+			// The animation binds to the body's bones and the AI drives the animation, so they're built in that order.
 			Body = gameObject.AddComponent<NPCBody>();
 			Animation = gameObject.AddComponent<NPCAnimation>();
 			Animation.Initialise(this, CreateAnimationProfile());

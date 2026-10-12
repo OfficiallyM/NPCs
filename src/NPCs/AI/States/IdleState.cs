@@ -6,7 +6,7 @@
 
 		public override void Enter()
 		{
-			Ai.LookAhead();
+			Ai.Animation.LookAhead();
 		}
 
 		public override void Tick()

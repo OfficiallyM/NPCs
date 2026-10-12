@@ -1,4 +1,3 @@
-using NPCs.Animation;
 using NPCs.Appearance;
 using NPCs.Utilities;
 using System.Collections.Generic;
@@ -11,8 +10,6 @@ namespace NPCs.Core
 	[DefaultExecutionOrder(-50)]
 	public class NPCBody : MonoBehaviour
 	{
-		private const float DEFAULT_LOOK_LERP = 5f;
-
 		private const float HITBOX_HEIGHT = 1.6f;
 		private const float HITBOX_RADIUS = 0.3f;
 		private const float HITBOX_CENTRE_Y = 0.8f;
@@ -46,10 +43,9 @@ namespace NPCs.Core
 		private readonly Dictionary<wearableType, Transform> _wearableAnchors = new Dictionary<wearableType, Transform>();
 		private readonly Dictionary<wearableType, GameObject> _worn = new Dictionary<wearableType, GameObject>();
 		private int _anchorVersion = -1;
+		private readonly Dictionary<string, Quaternion> _neutralRotations = new Dictionary<string, Quaternion>();
 
 		public playermodeloutfitscript Outfit => _outfit;
-
-		public NPCHeadLook Look { get; private set; }
 
 		public Transform Head => _rig.head;
 
@@ -59,6 +55,18 @@ namespace NPCs.Core
 		public Transform SpeechAnchor { get; private set; }
 
 		public bool IsRagdolled => _ragdolled;
+
+		/// <summary>
+		/// Gets a bone's rotation relative to the NPC root in the model's neutral pose.
+		/// </summary>
+		/// <param name="bone">A bone of this NPC.</param>
+		/// <param name="rotation">The neutral rotation, if the bone is known.</param>
+		/// <returns>True if the neutral pose has the bone</returns>
+		internal bool TryGetNeutralRotation(Transform bone, out Quaternion rotation)
+		{
+			rotation = Quaternion.identity;
+			return bone != null && _neutralRotations.TryGetValue(bone.name, out rotation);
+		}
 
 		internal bool TryGetBone(string boneName, out Transform bone)
 		{
@@ -259,9 +267,6 @@ namespace NPCs.Core
 				arm.Lower.localRotation = arm.LowerRest;
 				Aim(arm.Lower, arm.Hand, arm.LowerDirection);
 			}
-
-			Look.Tick(Time.deltaTime);
-			Look.Apply();
 		}
 
 		// Swings a bone about its pivot until the line to its child points the wanted way, whatever the bone's own axis are.
@@ -299,19 +304,10 @@ namespace NPCs.Core
 				BuildArm("r", templateBones, templateRoot),
 			};
 
-			float lerp = DEFAULT_LOOK_LERP;
-			newAiAnim munkasAnim = itemdatabase.d.gmunkas01.GetComponentInChildren<newAiAnim>(true);
-			if (munkasAnim != null)
-				lerp = munkasAnim.lookLerp;
-
-			Look = new NPCHeadLook(
-				transform,
-				_bones["neck_01"],
-				_rig.head,
-				RotationInRoot(templateRoot, templateBones["neck_01"]),
-				RotationInRoot(templateRoot, templateRig.head),
-				lerp
-			);
+			// The head look and the leg work both need to know how each bone sits in the neutral pose.
+			foreach (var pair in templateBones)
+				_neutralRotations[pair.Key] = RotationInRoot(templateRoot, pair.Value);
+			_neutralRotations[templateRig.head.name] = RotationInRoot(templateRoot, templateRig.head);
 		}
 
 		private Arm BuildArm(string side, Dictionary<string, Transform> templateBones, Transform templateRoot)

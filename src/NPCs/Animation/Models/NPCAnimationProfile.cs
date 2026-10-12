@@ -2,6 +2,14 @@ namespace NPCs.Animation.Models
 {
     public sealed class NPCAnimationProfile
     {
+        // How quickly the head catches up with what it is looking at. Zero or less uses the speed the vanilla NPCs use.
+        public float HeadLookLerp { get; set; } = 0f;
+        // Head gestures. Amplitudes are in degrees, durations in seconds.
+        public float NodAmplitude { get; set; } = 18f;
+        public float NodDuration { get; set; } = 1.2f;
+        public float ShakeAmplitude { get; set; } = 35f;
+        public float ShakeDuration { get; set; } = 1.4f;
+        public float HeadGestureCycles { get; set; } = 2f;
         public float GestureBlendIn { get; set; } = 0.25f;
         public float GestureBlendOut { get; set; } = 0.3f;
         public float WaveDuration { get; set; } = 2.4f;

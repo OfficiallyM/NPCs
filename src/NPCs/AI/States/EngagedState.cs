@@ -7,7 +7,7 @@
 		public override void Tick()
 		{
 			var player = mainscript.M.player;
-			Ai.LookAt(player.Th.position);
+			Ai.Animation.LookAt(player.Th.position);
 			Ai.FaceTowards(player.transform.position);
 
 			// A conversation is ended by the runner's own range check, so don't walk off mid-sentence.
@@ -17,7 +17,7 @@
 
 		public override void Exit()
 		{
-			Ai.LookAhead();
+			Ai.Animation.LookAhead();
 		}
 	}
 }
