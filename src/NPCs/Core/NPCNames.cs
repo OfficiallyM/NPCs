@@ -1,6 +1,6 @@
-using NPCs.Enums;
+using NPCs.Core.Enums;
 
-namespace NPCs.Common
+namespace NPCs.Core
 {
 	public static class NPCNames
 	{

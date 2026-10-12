@@ -1,7 +1,7 @@
 ﻿using NPCs.AI.States;
 using NPCs.AI.States.NPCs.AI.States;
-using NPCs.Common;
 using NPCs.Dialogue;
+using NPCs.Core;
 using UnityEngine;
 
 namespace NPCs.AI

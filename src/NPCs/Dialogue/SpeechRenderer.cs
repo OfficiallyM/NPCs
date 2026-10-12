@@ -1,5 +1,5 @@
-﻿using NPCs.Common;
-using NPCs.Dialogue.Core;
+﻿using NPCs.Display;
+using NPCs.Dialogue.Models;
 using System.Collections.Generic;
 using UnityEngine;
 

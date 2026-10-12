@@ -1,8 +1,8 @@
-﻿using NPCs.Enums;
+﻿using NPCs.Trading.Enums;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NPCs.Trading
+namespace NPCs.Trading.Models
 {
 	/// <summary>
 	/// Holds all personality rolls for a trader instance.

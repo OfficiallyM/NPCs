@@ -1,10 +1,9 @@
 using UnityEngine;
 
-namespace NPCs.Common
+namespace NPCs.Animation
 {
 	/// <summary>
 	/// Turns the neck and head bones towards a world point, lagging behind the target and respecting turn limits.
-	/// Replaces the look-at IK the vanilla munkas animator provided.
 	/// </summary>
 	public class NPCHeadLook
 	{

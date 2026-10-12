@@ -5,7 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace NPCs.Common
+namespace NPCs.Display
 {
 	internal class WorldspaceDisplay : MonoBehaviour
 	{

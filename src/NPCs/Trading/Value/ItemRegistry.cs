@@ -1,5 +1,5 @@
-﻿using NPCs.Enums;
-using NPCs.Trading.Core;
+﻿using NPCs.Trading.Enums;
+using NPCs.Trading.Models;
 using NPCs.Utilities;
 using System.Collections.Generic;
 using TLDLoader;

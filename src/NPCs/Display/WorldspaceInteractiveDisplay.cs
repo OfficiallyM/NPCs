@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace NPCs.Common
+namespace NPCs.Display
 {
 	/// <summary>
 	/// A worldspace interactive canvas supporting button layout and player interaction

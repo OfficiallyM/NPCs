@@ -8,7 +8,7 @@ namespace NPCs.Appearance
 	public class NPCAppearance
 	{
 		/// <summary>
-		/// Index of the character model, which is also the <see cref="Enums.Gender"/> value.
+		/// Index of the character model, which is also the <see cref="NPCs.Core.Models.Gender"/> value.
 		/// </summary>
 		public int Character;
 

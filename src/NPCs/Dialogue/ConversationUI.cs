@@ -1,5 +1,5 @@
-﻿using NPCs.Common;
-using NPCs.Dialogue.Core;
+﻿using NPCs.Core;
+using NPCs.Dialogue.Models;
 using NPCs.Trading;
 using NPCs.Utilities.UI;
 using UnityEngine;

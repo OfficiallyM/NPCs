@@ -1,4 +1,4 @@
-﻿using NPCs.Trading.Core;
+﻿using NPCs.Trading.Models;
 using NPCs.Trading.Value;
 using System.Collections.Generic;
 using UnityEngine;

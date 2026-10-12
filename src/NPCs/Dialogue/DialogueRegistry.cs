@@ -1,4 +1,4 @@
-﻿using NPCs.Dialogue.Core;
+﻿using NPCs.Dialogue.Models;
 using NPCs.Utilities;
 using System;
 using System.Collections.Generic;

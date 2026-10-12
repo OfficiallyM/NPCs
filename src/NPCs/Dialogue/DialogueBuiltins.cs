@@ -1,4 +1,4 @@
-﻿using NPCs.Common;
+﻿using NPCs.Core;
 using NPCs.Trading;
 using NPCs.Utilities;
 using System;

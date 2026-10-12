@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace NPCs.Common
+namespace NPCs.Display
 {
 	public struct RectPercent
 	{

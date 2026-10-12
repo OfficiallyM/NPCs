@@ -1,10 +1,11 @@
+using NPCs.Animation;
 using NPCs.Appearance;
 using NPCs.Utilities;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace NPCs.Common
+namespace NPCs.Core
 {
 	// Runs before the model's own late updates so the visible skeleton copies the pose set this frame.
 	[DefaultExecutionOrder(-50)]
@@ -58,6 +59,15 @@ namespace NPCs.Common
 		public Transform SpeechAnchor { get; private set; }
 
 		public bool IsRagdolled => _ragdolled;
+
+		internal bool TryGetBone(string boneName, out Transform bone)
+		{
+			if (_bones != null && _bones.TryGetValue(boneName, out bone) && bone != null)
+				return true;
+
+			bone = null;
+			return false;
+		}
 
 		private void Awake()
 		{

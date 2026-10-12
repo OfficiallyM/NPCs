@@ -1,5 +1,6 @@
 ﻿using NPCs.AI;
-using NPCs.Common;
+using NPCs.Core;
+using NPCs.Trading.Models;
 
 namespace NPCs.Trading
 {

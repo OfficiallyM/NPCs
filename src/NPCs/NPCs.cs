@@ -1,4 +1,4 @@
-﻿using NPCs.Dialogue;
+using NPCs.Dialogue;
 using NPCs.Harmony;
 using NPCs.Trading;
 using NPCs.Trading.Value;
@@ -52,7 +52,7 @@ namespace NPCs
 			bundle.Unload(false);
 
 			// NPC item IDs: 0 - 1000.
-			RegisterItem(itemdatabase.d.gragdoll, 0, "Trader")
+			RegisterItem(itemdatabase.d.gragdoll, 0, "NPC - Trader")
 				.WithRigidbody(90, 5)
 				.AddComponent<Trader>()
 				.Register();
@@ -76,6 +76,10 @@ namespace NPCs
 			DialogueBuiltins.Register();
 
 			RoadGenPlaceOne.HasInitalised = false;
+
+#if DEBUG
+			Debugging.NpcIkDebugger.Create();
+#endif
 		}
 
 		public override void Update()

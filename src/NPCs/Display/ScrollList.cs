@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace NPCs.Common
+namespace NPCs.Display
 {
 	/// <summary>
 	/// A scrollable list within a worldspace display.

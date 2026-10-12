@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Converters;
 using System.Collections.Generic;
 
-namespace NPCs.Dialogue.Core
+namespace NPCs.Dialogue.Models
 {
 	public abstract class ConversationConditional
 	{

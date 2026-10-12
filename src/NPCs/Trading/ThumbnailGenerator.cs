@@ -1,4 +1,4 @@
-﻿using NPCs.Trading.Core;
+﻿using NPCs.Trading.Models;
 using NPCs.Utilities;
 using System;
 using System.Collections;

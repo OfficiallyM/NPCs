@@ -1,4 +1,4 @@
-namespace NPCs.Enums
+namespace NPCs.Core.Enums
 {
 	/// <summary>
 	/// The values match the character indices on the player outfit script.

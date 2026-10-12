@@ -1,5 +1,5 @@
-﻿using NPCs.Common;
-using NPCs.Trading.Core;
+﻿using NPCs.Display;
+using NPCs.Trading.Models;
 using NPCs.Utilities;
 using System;
 using System.Collections.Generic;

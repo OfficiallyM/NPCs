@@ -1,6 +1,6 @@
 ﻿using NPCs.Dialogue;
-using NPCs.Enums;
-using NPCs.Trading.Core;
+using NPCs.Trading.Enums;
+using NPCs.Trading.Models;
 using NPCs.Trading.Value;
 using NPCs.Utilities;
 using System.Collections.Generic;

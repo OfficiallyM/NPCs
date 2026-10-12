@@ -1,4 +1,4 @@
-﻿namespace NPCs.Enums
+﻿namespace NPCs.Trading.Enums
 {
 	public enum ItemCategory
 	{

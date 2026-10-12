@@ -1,4 +1,4 @@
-﻿namespace NPCs.Dialogue.Core
+﻿namespace NPCs.Dialogue.Models
 {
 	public enum ConditionMatch
 	{

@@ -1,4 +1,4 @@
-﻿using NPCs.Enums;
+﻿using NPCs.Trading.Enums;
 using System.Collections.Generic;
 
 namespace NPCs.Trading.Value

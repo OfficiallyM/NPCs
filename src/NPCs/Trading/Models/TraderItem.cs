@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace NPCs.Trading.Core
+namespace NPCs.Trading.Models
 {
 	/// <summary>
 	/// Represents a single item in a trader's inventory with condition and colour state.

@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using NPCs.Dialogue.Core;
+using NPCs.Dialogue.Models;
 using NPCs.Utilities;
 using System.IO;
 using TLDLoader;

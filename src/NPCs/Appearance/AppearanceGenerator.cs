@@ -1,4 +1,4 @@
-using NPCs.Enums;
+using NPCs.Core.Enums;
 using System.Collections.Generic;
 using UnityEngine;
 

@@ -1,14 +1,16 @@
-﻿using NPCs.AI;
+using NPCs.AI;
+using NPCs.Animation;
+using NPCs.Animation.Models;
 using NPCs.Appearance;
+using NPCs.Core.Enums;
 using NPCs.Dialogue;
-using NPCs.Enums;
 using NPCs.Utilities;
 using System;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
 
-namespace NPCs.Common
+namespace NPCs.Core
 {
 	public abstract class NPC : MonoBehaviour
 	{
@@ -17,6 +19,7 @@ namespace NPCs.Common
 		public string NPCName { get; private set; }
 		public NPCAi Ai { get; private set; }
 		public NPCBody Body { get; private set; }
+		public NPCAnimation Animation { get; private set; }
 		public NPCAppearance Appearance { get; private set; }
 		public Gender Gender { get; private set; }
 		// TODO: Save once we have a save system.
@@ -33,6 +36,8 @@ namespace NPCs.Common
 		{
 			// The AI needs the body's head look, so the body goes first.
 			Body = gameObject.AddComponent<NPCBody>();
+			Animation = gameObject.AddComponent<NPCAnimation>();
+			Animation.Initialise(this, CreateAnimationProfile());
 			Ai = CreateAi();
 
 			Runner = gameObject.AddComponent<ConversationRunner>();
@@ -92,6 +97,11 @@ namespace NPCs.Common
 		/// </summary>
 		/// <returns>NPCAi instance to be added to the NPC</returns>
 		protected virtual NPCAi CreateAi() => gameObject.AddComponent<NPCAi>();
+
+		/// <summary>
+		/// Supplies per-NPC animation tuning. Override this to customise gestures for a specific NPC type.
+		/// </summary>
+		protected virtual NPCAnimationProfile CreateAnimationProfile() => new NPCAnimationProfile();
 
 		// The ragdoll prefab has no health of its own, so borrow from the munkas.
 		private breakablescript CreateBreakable()

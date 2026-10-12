@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 
-namespace NPCs.Common
+namespace NPCs.Core
 {
 	/// <summary>
 	/// Things an NPC remembers, such as having already given the player a freebie.
 	/// </summary>
 	/// <remarks>
-	/// Values are limited to bool, float and string so they stay simple to save later.
+	/// Values are limited to bool, float and string so they stay simple to save.
 	/// A key that was never set reads as false, 0 or an empty string.
 	/// </remarks>
 	public sealed class NPCMemory

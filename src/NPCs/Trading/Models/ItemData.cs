@@ -1,6 +1,6 @@
-﻿using NPCs.Enums;
+﻿using NPCs.Trading.Enums;
 
-namespace NPCs.Trading.Core
+namespace NPCs.Trading.Models
 {
 	public class ItemData
 	{

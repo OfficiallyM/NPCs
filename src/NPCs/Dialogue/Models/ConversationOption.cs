@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace NPCs.Dialogue.Core
+namespace NPCs.Dialogue.Models
 {
 	/// <summary>
 	/// A single player response option within a conversation node.

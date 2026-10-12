@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace NPCs.Dialogue.Core
+namespace NPCs.Dialogue.Models
 {
 	/// <summary>
 	/// A complete conversation tree.

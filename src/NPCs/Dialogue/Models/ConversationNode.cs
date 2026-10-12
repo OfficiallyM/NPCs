@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace NPCs.Dialogue.Core
+namespace NPCs.Dialogue.Models
 {
 	/// <summary>
 	/// A single node in a conversation tree.
