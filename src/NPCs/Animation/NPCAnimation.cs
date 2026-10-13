@@ -50,6 +50,7 @@ namespace NPCs.Animation
         private readonly ArmState _left = new ArmState();
         private readonly ArmState _right = new ArmState();
         private NPCHeadLook _headLook;
+        private NPCLegGait _legs;
         private Transform _head;
         private Vector3 _lookTarget;
         private NPCHeadGesture _headGesture;
@@ -57,6 +58,24 @@ namespace NPCs.Animation
         private bool _initialised;
 
         public bool IsReady => _left.Ready || _right.Ready;
+
+        /// <summary>
+        /// The leg gait, or null if the model's legs couldn't be bound.
+        /// </summary>
+        public NPCLegGait Legs => _legs;
+
+        /// <summary>
+        /// The live tuning values. The debugger edits these while the game runs.
+        /// </summary>
+        public NPCAnimationProfile Profile => _profile;
+
+        /// <summary>
+        /// Lays an override over this NPC's own profile. The gait reads the profile every frame, so it takes effect straight away.
+        /// </summary>
+        public void ApplyOverride(NPCAnimationOverride overrides)
+        {
+            overrides?.ApplyTo(_profile);
+        }
 
         /// <summary>
         /// The world point the head is actually looking at, which trails the point it was asked to look at.
@@ -87,6 +106,7 @@ namespace NPCs.Animation
                 Logging.LogWarning("Could not bind either arm for NPC animation on " + name + ".");
 
             BindHead();
+            BindLegs();
         }
 
         // The head's look point starts at the world origin, and the NPC may not be in place yet when this is built.
@@ -95,6 +115,7 @@ namespace NPCs.Animation
         {
             LookAhead();
             SnapLook();
+            _legs?.Snap();
         }
 
         /// <summary>
@@ -199,6 +220,21 @@ namespace NPCs.Animation
             }
 
             _headLook = new NPCHeadLook(transform, neck, _head, neckRest, headRest, ResolveHeadLookLerp());
+        }
+
+        private void BindLegs()
+        {
+            if (!_profile.LegsEnabled)
+                return;
+
+            if (!NPCLegGait.TryCreate(_body, transform, _profile, out _legs))
+            {
+                Logging.LogWarning("Could not bind the legs for NPC animation on " + name + ".");
+                return;
+            }
+
+            if (_profile.TorsoMotionEnabled && !_legs.HasTorso)
+                Logging.LogWarning("Could not bind the torso for NPC walking on " + name + ".");
         }
 
         private float ResolveHeadLookLerp()
@@ -386,6 +422,11 @@ namespace NPCs.Animation
                 _right.Hand.localRotation = _right.HandRestLocalRotation;
 
             float deltaTime = Mathf.Max(0f, Time.deltaTime);
+
+            // The legs go first because the pelvis carries the shoulders, and the arms should be solved from where those end up.
+            _legs?.SetArmFreedom(1f - _left.BlendWeight, 1f - _right.BlendWeight);
+            _legs?.Tick(deltaTime);
+
             EvaluateArm(_left, deltaTime);
             EvaluateArm(_right, deltaTime);
 

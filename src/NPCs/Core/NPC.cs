@@ -58,6 +58,9 @@ namespace NPCs.Core
 			// The look comes first because the name list depends on gender.
 			Appearance = CreateAppearance();
 			Gender = (Gender)Appearance.Character;
+
+			// The profile is built in Awake, before the gender is known, so the gender's part of it is layered on here.
+			Animation.ApplyOverride(CreateAnimationOverride(Gender));
 			Body.SetAppearance(Appearance);
 
 			NPCName = GenerateName();
@@ -102,6 +105,13 @@ namespace NPCs.Core
 		/// Supplies per-NPC animation tuning. Override this to customise gestures for a specific NPC type.
 		/// </summary>
 		protected virtual NPCAnimationProfile CreateAnimationProfile() => new NPCAnimationProfile();
+
+		/// <summary>
+		/// Supplies the animation values that depend on gender, laid over the base profile once the gender is known.
+		/// Override this to give an NPC type its own, either replacing the standard one or merged over it with Merge.
+		/// </summary>
+		/// <param name="gender">The gender this NPC was dressed as</param>
+		protected virtual NPCAnimationOverride CreateAnimationOverride(Gender gender) => NPCAnimationOverrides.For(gender);
 
 		// The ragdoll prefab has no health of its own, so borrow from the munkas.
 		private breakablescript CreateBreakable()
