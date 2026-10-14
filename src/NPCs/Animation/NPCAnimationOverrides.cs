@@ -26,8 +26,8 @@ namespace NPCs.Animation
 			StepWidthScale = 0.7f,
 			PelvisYaw = 6f,
 			ShoulderYaw = 3f,
-			PelvisSway = 0.035f,
-			PelvisRoll = 4.5f,
+			PelvisSway = 0.025f,
+			PelvisRoll = 3.5f,
 		};
 	}
 }

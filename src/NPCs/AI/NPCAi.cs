@@ -3,6 +3,7 @@ using NPCs.Animation;
 using NPCs.Dialogue;
 using NPCs.Core;
 using UnityEngine;
+using NPCs.AI.Enums;
 
 namespace NPCs.AI
 {
@@ -33,6 +34,11 @@ namespace NPCs.AI
 		/// </summary>
 		public NPCAnimation Animation { get; private set; }
 
+		/// <summary>
+		/// Moves the NPC around. States ask it to go somewhere and never steer or set velocities themselves.
+		/// </summary>
+		public NPCLocomotion Locomotion { get; private set; }
+
 		public bool InConversation => _runner != null && _runner.IsActive;
 
 		public float DistanceToPlayer => Vector3.Distance(transform.position, mainscript.M.player.transform.position);
@@ -41,6 +47,7 @@ namespace NPCs.AI
 		{
 			_runner = GetComponent<ConversationRunner>();
 			Animation = GetComponent<NPC>().Animation;
+			Locomotion = GetComponent<NPC>().Locomotion;
 
 			GetComponent<NPC>().OnDeath += () => enabled = false;
 
@@ -62,6 +69,9 @@ namespace NPCs.AI
 
 		// Go back to whatever this NPC type does when nothing is happening.
 		public virtual void Rest() => SetState(new IdleState(this));
+
+		// Walks to a point, then goes back to resting once it gets there or gives up.
+		public void WalkTo(Vector3 point, NPCSpeed speed) => SetState(new WalkState(this, point, speed));
 
 		// Called when the NPC notices the player.
 		public virtual void Engage() => SetState(new EngagedState(this));

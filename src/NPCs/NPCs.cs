@@ -78,7 +78,7 @@ namespace NPCs
 			RoadGenPlaceOne.HasInitalised = false;
 
 #if DEBUG
-			Debugging.NpcIkDebugger.Create();
+			Debugging.NPCDebugger.Create();
 #endif
 		}
 

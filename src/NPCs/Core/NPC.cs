@@ -20,6 +20,7 @@ namespace NPCs.Core
 		public NPCAi Ai { get; private set; }
 		public NPCBody Body { get; private set; }
 		public NPCAnimation Animation { get; private set; }
+		public NPCLocomotion Locomotion { get; private set; }
 		public NPCAppearance Appearance { get; private set; }
 		public Gender Gender { get; private set; }
 		// TODO: Save once we have a save system.
@@ -38,6 +39,7 @@ namespace NPCs.Core
 			Body = gameObject.AddComponent<NPCBody>();
 			Animation = gameObject.AddComponent<NPCAnimation>();
 			Animation.Initialise(this, CreateAnimationProfile());
+			Locomotion = gameObject.AddComponent<NPCLocomotion>();
 			Ai = CreateAi();
 
 			Runner = gameObject.AddComponent<ConversationRunner>();
