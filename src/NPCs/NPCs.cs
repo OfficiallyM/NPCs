@@ -1,3 +1,4 @@
+using NPCs.Core;
 using NPCs.Dialogue;
 using NPCs.Harmony;
 using NPCs.Trading;
@@ -83,6 +84,9 @@ namespace NPCs
 
 		public override void Update()
 		{
+			// Measured once here so every NPC reads the same value.
+			PlayerMotion.Tick();
+
 			// Process trader spawning queue.
 			if (TraderSpawnQueue.Count > 0)
 			{

@@ -103,6 +103,11 @@ namespace NPCs.AI
 		// Still counts as moving while slowing down after Stop.
 		public bool IsMoving => _hasDestination || _speed > STOPPED_SPEED;
 
+		/// <summary>
+		/// True while the game has the body frozen, which it does beyond a certain range of the player. A frozen body can't be walked.
+		/// </summary>
+		public bool IsFrozen => _body != null && _body.isKinematic;
+
 		private void Awake()
 		{
 			_npc = GetComponent<NPC>();
@@ -210,6 +215,13 @@ namespace NPCs.AI
 				_hasDestination = false;
 				_speed = 0f;
 				enabled = false;
+				return;
+			}
+
+			// The stuck window restarts so the pause isn't mistaken for being stuck when the body is unfrozen.
+			if (_body.isKinematic)
+			{
+				ResetStuckWindow();
 				return;
 			}
 

@@ -347,7 +347,7 @@ namespace NPCs.Debugging
 			{
 				_speed = selected;
 				locomotion.SetSpeed(_speed);
-				_npc.Ai.Follower?.SetSpeed(_speed);
+				_npc.Ai.SetTravelSpeed(_speed);
 			}
 
 			GUILayout.BeginHorizontal();
@@ -373,6 +373,9 @@ namespace NPCs.Debugging
 				_laneOffset = ai.RoadLaneOffset;
 
 			GUILayout.Space(6f);
+
+			GUILayout.Label("State: " + ai.DebugSummary);
+			GUILayout.Label("Player " + PlayerMotion.Speed.ToString("F1") + " m/s, " + ai.DistanceToPlayer.ToString("F0") + " m away");
 
 			NPCRouteFollower follower = ai.Follower;
 			GUILayout.Label($"Route: {(follower != null ? $"{follower.Status}, target {follower.TargetDistance:F1} m away" : "not travelling")}");

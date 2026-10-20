@@ -17,7 +17,14 @@ namespace NPCs.AI
 
 		public virtual void Exit() { }
 
-		// Override if the state remembers a world position. Most states re-read what they need every tick and can ignore this.
+		/// <summary>
+		/// Override if the state remembers a world position. Most states re-read what they need every tick and can ignore this.
+		/// </summary>
 		public virtual void OnWorldShifted(Vector3 delta) { }
+
+		/// <summary>
+		/// A short description of what the state is doing, for the debugger.
+		/// </summary>
+		public virtual string Describe() => GetType().Name;
 	}
 }

@@ -11,7 +11,7 @@
 
 		public override void Tick()
 		{
-			if (Ai.DistanceToPlayer <= Ai.NoticeRange)
+			if (!Ai.InviteSpent && Ai.DistanceToPlayer <= Ai.NoticeRange)
 				Ai.Engage();
 		}
 	}
