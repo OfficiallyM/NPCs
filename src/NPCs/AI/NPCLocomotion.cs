@@ -6,7 +6,7 @@ using UnityEngine;
 namespace NPCs.AI
 {
 	[DisallowMultipleComponent]
-	public sealed class NPCLocomotion : MonoBehaviour
+	public sealed class NPCLocomotion : MonoBehaviour, IWorldShiftable
 	{
 		// Cruising speeds in metres per second. The leg gait is tuned for roughly 1.2 to 3.5.
 		private const float WALK_SPEED = 1.4f;
@@ -168,19 +168,36 @@ namespace NPCs.AI
 			_targetSpeed = 0f;
 		}
 
+		/// <summary>
+		/// Moves the destination of a walk that's already under way without the resets MoveTo does, so avoidance and stuck tracking carry on.
+		/// For following a target that moves, such as the point ahead on a route. Does nothing when there's no destination.
+		/// </summary>
+		/// <param name="point">The new destination. Only the horizontal position matters</param>
+		public void Retarget(Vector3 point)
+		{
+			if (!_hasDestination)
+				return;
+
+			_destination = point;
+		}
+
+		// The destination and the start of the stuck window are world positions, so they move with the world or the NPC would walk towards where its target used to be.
+		public void OnWorldShifted(Vector3 delta)
+		{
+			_destination += delta;
+			_windowStart += delta;
+		}
+
 		private static float ResolveSpeed(NPCSpeed speed)
 		{
-			switch (speed)
+			return speed switch
 			{
-				case NPCSpeed.Jog:
-					return JOG_SPEED;
-				case NPCSpeed.Run:
-					return RUN_SPEED;
-				case NPCSpeed.WalkFast:
-					return WALK_FAST_SPEED;
-				default:
-					return WALK_SPEED;
-			}
+				NPCSpeed.Jog => JOG_SPEED,
+				NPCSpeed.Run => RUN_SPEED,
+				NPCSpeed.WalkFast => WALK_FAST_SPEED,
+				NPCSpeed.Walk => WALK_SPEED,
+				_ => WALK_SPEED,
+			};
 		}
 
 		private void FixedUpdate()

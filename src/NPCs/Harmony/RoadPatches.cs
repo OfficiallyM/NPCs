@@ -1,6 +1,4 @@
 ﻿using HarmonyLib;
-using NPCs.Utilities;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace NPCs.Harmony
@@ -13,7 +11,7 @@ namespace NPCs.Harmony
 		private const int MIN_SPAWN = 100;
 		private const int MAX_SPAWN = 501;
 
-		private static void Postfix(roadGenScript __instance, int pi)
+		private static void Postfix(int pi)
 		{
 			if (!HasInitalised)
 			{
@@ -24,7 +22,6 @@ namespace NPCs.Harmony
 			if (!HasInitalised || pi != _nextSpawnIndex)
 				return;
 
-			var road = __instance.roadList[pi];
 			NPCs.I.TraderSpawnQueue.Add(pi);
 			_nextSpawnIndex = pi + Random.Range(MIN_SPAWN, MAX_SPAWN);
 		}

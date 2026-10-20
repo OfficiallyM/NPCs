@@ -8,7 +8,7 @@ namespace NPCs.Animation
 {
     [DefaultExecutionOrder(-40)]
     [DisallowMultipleComponent]
-    public sealed class NPCAnimation : MonoBehaviour
+    public sealed class NPCAnimation : MonoBehaviour, IWorldShiftable
     {
         private const float MinimumBlendTime = 0.001f;
         private const float MinimumDuration = 0.1f;
@@ -75,6 +75,25 @@ namespace NPCs.Animation
         public void ApplyOverride(NPCAnimationOverride overrides)
         {
             overrides?.ApplyTo(_profile);
+        }
+
+        /// <summary>
+        /// Moves every world point the animation is holding, so a shift of the world doesn't leave the head and hands aiming at where things used to be.
+        /// </summary>
+        public void OnWorldShifted(Vector3 delta)
+        {
+            _lookTarget += delta;
+            _headLook?.Shift(delta);
+            _legs?.Shift(delta);
+            ShiftArm(_left, delta);
+            ShiftArm(_right, delta);
+        }
+
+        private static void ShiftArm(ArmState arm, Vector3 delta)
+        {
+            arm.LastTarget += delta;
+            arm.TransitionStartTarget += delta;
+            arm.PointTargetPosition += delta;
         }
 
         /// <summary>

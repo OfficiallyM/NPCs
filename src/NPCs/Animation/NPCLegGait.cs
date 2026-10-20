@@ -144,6 +144,11 @@ namespace NPCs.Animation
 		}
 
 		/// <summary>
+		/// Moves the remembered position by the distance the world was shifted, so the jump isn't measured as a teleport that resets the walking speed.
+		/// </summary>
+		public void Shift(Vector3 delta) => _lastPosition += delta;
+
+		/// <summary>
 		/// Tells the walk how much each arm is free to swing, so an arm that is waving or pointing isn't also swinging.
 		/// </summary>
 		public void SetArmFreedom(float left, float right) => _torso?.SetArmFreedom(left, right);

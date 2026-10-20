@@ -1,10 +1,13 @@
 using NPCs.AI;
 using NPCs.AI.Enums;
+using NPCs.AI.Routes;
 using NPCs.Animation;
 using NPCs.Animation.Enums;
 using NPCs.Animation.Models;
 using NPCs.Core;
 using NPCs.Utilities;
+using System.Collections.Generic;
+using TLDLoader.Utilities.UI;
 using UnityEngine;
 
 namespace NPCs.Debugging
@@ -20,6 +23,7 @@ namespace NPCs.Debugging
 		private string _status = "Searching for an NPC";
 		private Vector2 _scroll;
 		private bool _show = false;
+		private bool _unlocked = false;
 		private Rect _windowRect = new Rect(12f, 12f, 390f, 700f);
 		private const int WindowId = 81742;
 
@@ -29,6 +33,15 @@ namespace NPCs.Debugging
 		private static readonly string[] _speedLabels = { "Walk", "Walk fast", "Jog", "Run" };
 
 		private NPCSpeed _speed = NPCSpeed.Walk;
+
+		private static readonly string[] _directionLabels = { "Forwards", "Backwards" };
+
+		// Points are kept as global positions so they stay put when the game shifts the world.
+		private readonly List<GlobalPoint> _points = new List<GlobalPoint>();
+		private RouteDirection _direction = RouteDirection.Forwards;
+
+		// Starts as the NPC type's own lane so the slider shows what it would really do.
+		private float _laneOffset = float.NaN;
 
 		public static NPCDebugger Create()
 		{
@@ -44,16 +57,12 @@ namespace NPCs.Debugging
 		private void Update()
 		{
 			if (Input.GetKeyDown(KeyCode.F8))
-			{
-				_show = !_show;
-				if (!_show)
-				{
-					StopWalking();
-					_npc = null;
-				}
-			}
+				Toggle();
 
 			if (!_show) return;
+
+			if (!mainscript.M.menu.Menu.activeSelf && Input.GetButtonDown("Cancel"))
+				Toggle(false);
 
 			if (_npc != null
 				&& (!_npc.gameObject.activeInHierarchy
@@ -73,6 +82,37 @@ namespace NPCs.Debugging
 
 			_nextSearchTime = Time.unscaledTime + SearchInterval;
 			TryBindNearestNpc();
+		}
+
+		private void Toggle(bool? forcedState = null)
+		{
+			// Something else has control of the cursor, don't toggle the UI.
+			if (!_show && !mainscript.M.crsrLocked)
+				return;
+
+			if (forcedState.HasValue)
+				_show = forcedState.Value;
+			else
+			{
+				if (_unlocked)
+				{
+					SetCursorState(true);
+					_unlocked = false;
+					return;
+				}
+
+				_show = !_show;
+			}
+			_unlocked = false;
+
+			SetCursorState(_show);
+		}
+
+		private void SetCursorState(bool isActive)
+		{
+			mainscript.M.crsrLocked = !isActive;
+			mainscript.M.SetCursorVisible(isActive);
+			mainscript.M.menu.gameObject.SetActive(!isActive);
 		}
 
 		private void TryBindNearestNpc()
@@ -111,8 +151,14 @@ namespace NPCs.Debugging
 			}
 
 			_npc = nearest;
-			_status = "Bound to " + nearest.name + " at " + nearestDistance.ToString("F2") + " m";
-			Logging.LogDebug("[NPCs Debugger] " + _status);
+			_status = $"Bound to {nearest.name} at {nearestDistance:F2} m";
+			Logging.LogDebug($"[NPCs Debugger] {_status}");
+		}
+
+		private void UnbindNpc()
+		{
+			StopWalking();
+			_npc = null;
 		}
 
 		private void OnGUI()
@@ -120,49 +166,72 @@ namespace NPCs.Debugging
 			if (!_show)
 				return;
 
+			GUI.skin = Styling.GetSkin();
+
 			_windowRect = GUI.Window(
 				WindowId,
 				_windowRect,
 				DrawWindow,
-				"NPC Debugger"
+				string.Empty,
+				"box"
 			);
+
+			GUI.skin = null;
 		}
 
 		private void DrawWindow(int windowId)
 		{
+			GUI.Box(new Rect(0, 0, _windowRect.width, 30f), "<size=18><b>NPC Debugger</b></size>", "BoxDark");
+
+			float dragWidth = _windowRect.width - 30f;
+			GUI.DragWindow(new Rect(0, 0, dragWidth, 30f));
+
+			if (GUI.Button(new Rect(_windowRect.width - 30f, 0, 30f, 30f), "X"))
+				Toggle(false);
+			GUILayout.Space(10);
+
+			GUILayout.BeginArea(new Rect(0, 35, _windowRect.width, _windowRect.height - 30f));
+			GUILayout.BeginVertical("box");
+			if (GUILayout.Button($"{(_unlocked ? "Lock" : "Unlock")} cursor"))
+			{
+				SetCursorState(false);
+				_unlocked = true;
+			}
+			GUILayout.Label($"Status: {_status}");
+			GUILayout.Label($"NPC: {(_npc != null ? _npc.name : "Not found")}");
+			GUILayout.Label($"Gender: {(_npc?.Gender.ToString() ?? "Not found")}");
+			GUILayout.EndVertical();
+
 			_scroll = GUILayout.BeginScrollView(_scroll);
-
-			GUILayout.Label("Status: " + _status);
-			GUILayout.Label("NPC: " + (_npc != null ? _npc.name + " (" + _npc.Gender + ")" : "Not found"));
-
 			if (_npc != null && _npc.Animation != null)
 			{
 				if (GUILayout.Button("Rebind Nearest NPC"))
 				{
 					_npc = null;
 					_nextSearchTime = 0f;
+					return;
 				}
 
 				NPCAnimation animation = _npc.Animation;
 				DrawLocomotionControls();
+				DrawRouteControls();
 				DrawGestureControls(animation);
 				DrawLegControls(animation);
 			}
 			else
 			{
-				GUILayout.Label("Waiting for a living NPC with at least one bound arm.");
+				GUILayout.Label("Waiting for a living NPC.");
 			}
 
 			GUILayout.EndScrollView();
-
-			// Drag the window using its title bar.
-			GUI.DragWindow(new Rect(0f, 0f, 10000f, 24f));
+			GUILayout.EndArea();
 		}
 
 		private void DrawGestureControls(NPCAnimation animation)
 		{
-			GUILayout.Label("Left arm: " + DescribeHand(animation, NPCHand.Left));
-			GUILayout.Label("Right arm: " + DescribeHand(animation, NPCHand.Right));
+			GUILayout.Label("Gestures", "LabelHeader");
+			GUILayout.Label($"Left arm: {DescribeHand(animation, NPCHand.Left)}");
+			GUILayout.Label($"Right arm: {DescribeHand(animation, NPCHand.Right)}");
 
 			GUILayout.BeginHorizontal();
 			if (GUILayout.Button("Wave Left") && animation.IsHandReady(NPCHand.Left))
@@ -200,6 +269,7 @@ namespace NPCs.Debugging
 
 		private void DrawLegControls(NPCAnimation animation)
 		{
+			GUILayout.Label("Legs", "LabelHeader");
 			NPCLegGait legs = animation.Legs;
 			GUILayout.Space(6f);
 
@@ -209,12 +279,10 @@ namespace NPCs.Debugging
 				return;
 			}
 
-			GUILayout.Label("Speed " + legs.Speed.ToString("F2") + " m/s, step " + legs.StepLength.ToString("F2")
-				+ " m, phase " + legs.Phase.ToString("F2") + ", pelvis drop " + legs.PelvisDrop.ToString("F3") + " m");
-			GUILayout.Label("Leg rest extension " + legs.RestExtension.ToString("F3") + " (1 is straight), ankle height " + legs.AnkleHeight.ToString("F3")
-				+ " m, torso " + (legs.HasTorso ? "bound" : "UNBOUND"));
-			GUILayout.Label("Left foot: " + DescribeFoot(legs.Left));
-			GUILayout.Label("Right foot: " + DescribeFoot(legs.Right));
+			GUILayout.Label($"Speed {legs.Speed:F2} m/s, step {legs.StepLength:F2} m, phase {legs.Phase:F2}, pelvis drop {legs.PelvisDrop:F3} m");
+			GUILayout.Label($"Leg rest extension {legs.RestExtension:F3} (1 is straight), ankle height {legs.AnkleHeight:F3} m, torso {(legs.HasTorso ? "bound" : "UNBOUND")}");
+			GUILayout.Label($"Left foot: {DescribeFoot(legs.Left)}");
+			GUILayout.Label($"Right foot: {DescribeFoot(legs.Right)}");
 
 			DrawTuning(animation.Profile);
 
@@ -223,6 +291,7 @@ namespace NPCs.Debugging
 		// Edits the live profile, which the gait reads every frame, so changes show straight away.
 		private static void DrawTuning(NPCAnimationProfile profile)
 		{
+			GUILayout.Label("IK Tuning", "LabelHeader");
 			profile.MaxLegExtension = Slider("Max leg extension", profile.MaxLegExtension, 0.85f, 1f);
 			profile.PelvisStandDrop = Slider("Pelvis stand drop", profile.PelvisStandDrop, -0.05f, 0.1f);
 			profile.StepWidthScale = Slider("Step width scale", profile.StepWidthScale, 0.3f, 1.3f);
@@ -248,7 +317,7 @@ namespace NPCs.Debugging
 		private static float Slider(string label, float value, float min, float max)
 		{
 			GUILayout.BeginHorizontal();
-			GUILayout.Label(label + " " + value.ToString("F3"), GUILayout.Width(190f));
+			GUILayout.Label($"{label} {value:F3}", GUILayout.Width(190f));
 			value = GUILayout.HorizontalSlider(value, min, max);
 			GUILayout.EndHorizontal();
 			return value;
@@ -256,14 +325,12 @@ namespace NPCs.Debugging
 
 		private static string DescribeFoot(NPCFootState foot)
 		{
-			return (foot.Swinging ? "swing" : "planted")
-				+ ", ground " + (foot.GroundHit ? "found" : "MISSING")
-				+ ", solver " + (foot.SolveSucceeded ? "OK" : "idle")
-				+ ", error " + Vector3.Distance(foot.Position, foot.Target).ToString("F3") + " m";
+			return $"{(foot.Swinging ? "swing" : "planted")}, ground {(foot.GroundHit ? "found" : "MISSING")}, solver {(foot.SolveSucceeded ? "OK" : "idle")}, error {Vector3.Distance(foot.Position, foot.Target):F3} m";
 		}
 
 		private void DrawLocomotionControls()
 		{
+			GUILayout.Label("Locomotion", "LabelHeader");
 			NPCLocomotion locomotion = _npc.Ai?.Locomotion;
 			GUILayout.Space(6f);
 
@@ -273,14 +340,14 @@ namespace NPCs.Debugging
 				return;
 			}
 
-			GUILayout.Label("Locomotion: " + (locomotion.HasDestination ? "heading to " + locomotion.Destination.ToString("F1") : "no destination")
-				+ ", speed " + locomotion.CurrentSpeed.ToString("F2") + " m/s");
+			GUILayout.Label($"Locomotion: {(locomotion.HasDestination ? $"heading to {locomotion.Destination:F1}" : "no destination")}, speed {locomotion.CurrentSpeed:F2} m/s");
 
-			NPCSpeed selected = (NPCSpeed)GUILayout.Toolbar((int)_speed, _speedLabels);
+			NPCSpeed selected = (NPCSpeed)StyledToolbar((int)_speed, _speedLabels);
 			if (selected != _speed)
 			{
 				_speed = selected;
 				locomotion.SetSpeed(_speed);
+				_npc.Ai.Follower?.SetSpeed(_speed);
 			}
 
 			GUILayout.BeginHorizontal();
@@ -293,6 +360,64 @@ namespace NPCs.Debugging
 			if (GUILayout.Button("Stop"))
 				StopWalking();
 			GUILayout.EndHorizontal();
+		}
+
+		private void DrawRouteControls()
+		{
+			GUILayout.Label("Route", "LabelHeader");
+			NPCAi ai = _npc.Ai;
+			if (ai == null)
+				return;
+
+			if (float.IsNaN(_laneOffset))
+				_laneOffset = ai.RoadLaneOffset;
+
+			GUILayout.Space(6f);
+
+			NPCRouteFollower follower = ai.Follower;
+			GUILayout.Label($"Route: {(follower != null ? $"{follower.Status}, target {follower.TargetDistance:F1} m away" : "not travelling")}");
+
+			_direction = (RouteDirection)StyledToolbar((int)_direction, _directionLabels);
+			_laneOffset = Slider("Lane offset (right of travel)", _laneOffset, -12f, 12f);
+
+			if (GUILayout.Button("Follow road"))
+				FollowRoad();
+
+			GUILayout.Label($"Points: {_points.Count}");
+			GUILayout.BeginHorizontal();
+			if (GUILayout.Button("Add point here"))
+				_points.Add(GlobalPoint.FromWorld(mainscript.M.player.transform.position));
+
+			if (GUILayout.Button("Clear points"))
+				_points.Clear();
+
+			if (GUILayout.Button("Walk points"))
+				WalkPoints();
+			GUILayout.EndHorizontal();
+		}
+
+		private void FollowRoad()
+		{
+			if (!RoadRoute.TryCreateNear(_npc.transform.position, _direction, _laneOffset, out RoadRoute route))
+			{
+				_status = "No placed road piece found near the NPC";
+				return;
+			}
+
+			_npc.Ai.Travel(route, _speed);
+			_status = $"Following the road {_direction}";
+		}
+
+		private void WalkPoints()
+		{
+			if (_points.Count == 0)
+			{
+				_status = "Add at least one point first";
+				return;
+			}
+
+			_npc.Ai.Travel(new PointRoute(_points), _speed);
+			_status = $"Walking {_points.Count} points";
 		}
 
 		private void WalkToPlayer()
@@ -315,7 +440,8 @@ namespace NPCs.Debugging
 			if (_npc?.Ai?.Locomotion == null)
 				return;
 
-			if (_npc.Ai.Locomotion.HasDestination)
+			// A route that's waiting for road to load has no destination but is still travelling.
+			if (_npc.Ai.Locomotion.HasDestination || _npc.Ai.Follower != null)
 				_npc.Ai.Rest();
 		}
 
@@ -324,10 +450,7 @@ namespace NPCs.Debugging
 			if (!animation.IsHandReady(hand))
 				return "unbound";
 
-			return animation.GetCurrentGesture(hand)
-				+ ", weight " + animation.GetGestureWeight(hand).ToString("F2")
-				+ ", solver " + (animation.GetLastSolveSucceeded(hand) ? "OK" : "idle")
-				+ ", error " + animation.GetLastHandError(hand).ToString("F3") + " m";
+			return $"{animation.GetCurrentGesture(hand)}, weight {animation.GetGestureWeight(hand):F2}, solver {(animation.GetLastSolveSucceeded(hand) ? "OK" : "idle")}, error {animation.GetLastHandError(hand):F3} m";
 		}
 
 		private void PointAtPlayer(NPCAnimation animation, NPCHand hand)
@@ -338,7 +461,26 @@ namespace NPCs.Debugging
 
 			Vector3 target = player.position + Vector3.up * 0.5f;
 			if (!animation.PlayPoint(hand, target))
-				_status = "Could not start point gesture for " + hand;
+				_status = $"Could not start point gesture for {hand}";
+		}
+
+		private int StyledToolbar(int current, string[] options)
+		{
+			int changed = current;
+			GUILayout.BeginHorizontal();
+			for (int i = 0; i < options.Length; i++)
+			{
+				string style = i == current ? "ButtonSecondary" : "button";
+				if (GUILayout.Button(options[i], style, GUILayout.MaxHeight(30f)))
+				{
+					if (current != i)
+					{
+						changed = i;
+					}
+				}
+			}
+			GUILayout.EndHorizontal();
+			return changed;
 		}
 	}
 }

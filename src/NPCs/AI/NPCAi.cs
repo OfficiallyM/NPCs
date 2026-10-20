@@ -4,10 +4,11 @@ using NPCs.Dialogue;
 using NPCs.Core;
 using UnityEngine;
 using NPCs.AI.Enums;
+using NPCs.AI.Routes;
 
 namespace NPCs.AI
 {
-	public class NPCAi : MonoBehaviour
+	public class NPCAi : MonoBehaviour, IWorldShiftable
 	{
 		private NPCState _state;
 		private ConversationRunner _runner;
@@ -29,6 +30,9 @@ namespace NPCs.AI
 		// The body stops turning once the target is within this angle of straight ahead.
 		public virtual float BodySettleAngle => 10f;
 
+		// How far to the right of the road's centre line this NPC walks, looking the way it's travelling. Negative walks on the left.
+		public virtual float RoadLaneOffset => 0f;
+
 		/// <summary>
 		/// Where the NPC's head and limbs are moved. The AI decides what to do and the animation decides how it looks.
 		/// </summary>
@@ -38,6 +42,11 @@ namespace NPCs.AI
 		/// Moves the NPC around. States ask it to go somewhere and never steer or set velocities themselves.
 		/// </summary>
 		public NPCLocomotion Locomotion { get; private set; }
+
+		/// <summary>
+		/// The follower walking the NPC along its route, or null if it isn't travelling one.
+		/// </summary>
+		public NPCRouteFollower Follower => (_state as TravelState)?.Follower;
 
 		public bool InConversation => _runner != null && _runner.IsActive;
 
@@ -73,8 +82,13 @@ namespace NPCs.AI
 		// Walks to a point, then goes back to resting once it gets there or gives up.
 		public void WalkTo(Vector3 point, NPCSpeed speed) => SetState(new WalkState(this, point, speed));
 
+		// Walks along a route, then goes back to resting once it ends or the NPC gives up.
+		public void Travel(NPCRoute route, NPCSpeed speed) => SetState(new TravelState(this, route, speed));
+
 		// Called when the NPC notices the player.
 		public virtual void Engage() => SetState(new EngagedState(this));
+
+		public void OnWorldShifted(Vector3 delta) => _state?.OnWorldShifted(delta);
 
 		// The head leads and the body only follows once the head has turned as far as it comfortably can.
 		public void FaceTowards(Vector3 point)

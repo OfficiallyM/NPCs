@@ -3,7 +3,6 @@ using NPCs.Harmony;
 using NPCs.Trading;
 using NPCs.Trading.Value;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using TLDLoader;
 using UnityEngine;
@@ -12,7 +11,6 @@ namespace NPCs
 {
 	public class NPCs : Mod
 	{
-		// Mod meta stuff.
 		private string _version = "0.0.1";
 		public override string ID => "M_NPCs";
 		public override string Name => "NPCs";
@@ -34,6 +32,7 @@ namespace NPCs
 			}
 		}
 
+		// TODO: Build proper spawn system once AI is working.
 		internal List<int> TraderSpawnQueue = new List<int>();
 
 		public NPCs()
@@ -93,6 +92,8 @@ namespace NPCs
 					var road = TerrainGenerator.TG.roads[0].roadList[index];
 					var spawnedTrader = GameObject.Instantiate(NPCs.I.GetItem(0), road.nr.position + road.nr.up * 4f + road.nr.right * 7f + -road.nr.forward * 4.5f, Quaternion.LookRotation(-road.nr.right, road.nr.up));
 					// Freeze trader on spawn.
+					// TODO: Test moving this to NPC Start() to have all NPCs handle it
+					// themselves by default, rather than needing the spawn logic to handle it.
 					var rb = spawnedTrader.GetComponent<Rigidbody>();
 					if (rb != null)
 						rb.isKinematic = true;

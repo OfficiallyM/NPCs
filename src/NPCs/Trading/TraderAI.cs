@@ -8,5 +8,8 @@ namespace NPCs.Trading
 		public override float NoticeRange => 15f;
 
 		public override float LoseRange => 20f;
+
+		// Puts the trader on the edge of the road, to the right of the way they're walking.
+		public override float RoadLaneOffset => 4.1f;
 	}
 }

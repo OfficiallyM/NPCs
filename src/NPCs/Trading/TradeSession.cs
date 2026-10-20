@@ -1,4 +1,5 @@
-﻿using NPCs.Dialogue;
+﻿using NPCs.Core;
+using NPCs.Dialogue;
 using NPCs.Trading.Enums;
 using NPCs.Trading.Models;
 using NPCs.Trading.Value;
@@ -14,9 +15,11 @@ namespace NPCs.Trading
 	/// Manages the state of an active trade between the player and a trader.
 	/// Owned by the trader, activated via the open_trade dialogue action.
 	/// </summary>
-	internal class TradeSession : MonoBehaviour
+	internal class TradeSession : MonoBehaviour, IWorldShiftable
 	{
 		private Trader _trader;
+		public void OnWorldShifted(Vector3 delta) => _spawnPos += delta;
+
 		private TraderBillboard _traderBillboard;
 		private PlayerBillboard _playerBillboard;
 		private TradeZone _tradeZone;

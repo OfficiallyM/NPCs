@@ -51,6 +51,15 @@ namespace NPCs.Animation
 		/// </summary>
 		public void Snap() => Current = Target;
 
+		/// <summary>
+		/// Moves both points by the distance the world was shifted, so the head doesn't swing round to where its target used to be.
+		/// </summary>
+		public void Shift(Vector3 delta)
+		{
+			Target += delta;
+			Current += delta;
+		}
+
 		public void Tick(float deltaTime)
 		{
 			Current = Vector3.Lerp(Current, Target, deltaTime * _lerp);

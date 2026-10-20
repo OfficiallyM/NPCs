@@ -4,6 +4,7 @@ using NPCs.Animation.Models;
 using NPCs.Appearance;
 using NPCs.Core.Enums;
 using NPCs.Dialogue;
+using NPCs.Harmony;
 using NPCs.Utilities;
 using System;
 using System.Collections;
@@ -15,6 +16,8 @@ namespace NPCs.Core
 	public abstract class NPC : MonoBehaviour
 	{
 		private const float FALLBACK_HEALTH = 20f;
+
+		private visszarako _shifter;
 
 		public string NPCName { get; private set; }
 		public NPCAi Ai { get; private set; }
@@ -47,6 +50,11 @@ namespace NPCs.Core
 			gameObject.AddComponent<SpeechRenderer>();
 			Breakable = CreateBreakable();
 
+			// Register the NPC to handle origin shifting.
+			_shifter = GetComponent<visszarako>();
+			if (_shifter != null)
+				WorldShiftPatch.Register(_shifter, this);
+
 			// Remove any mod components that aren't ours from the NPCs.
 			Components.StripComponents(gameObject);
 		}
@@ -71,6 +79,20 @@ namespace NPCs.Core
 			OnDeath += Body.Ragdoll;
 			OnDeath += PlayDeathSound;
 			OnDeath += () => StartCoroutine(ResurrectionRoutine());
+		}
+
+		// Components are looked up each time because a shift is rare and subclasses add their own after this one has been built.
+		internal void OnWorldShifted(Vector3 delta)
+		{
+			foreach (IWorldShiftable shiftable in GetComponents<IWorldShiftable>())
+				shiftable.OnWorldShifted(delta);
+		}
+
+		// Unity treats the component as null once it's destroyed, but the dictionary key still needs removing.
+		private void OnDestroy()
+		{
+			if (!ReferenceEquals(_shifter, null))
+				WorldShiftPatch.Unregister(_shifter);
 		}
 
 		private void Update()
