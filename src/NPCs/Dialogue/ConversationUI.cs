@@ -1,9 +1,9 @@
-﻿using NPCs.Core;
+﻿using MLib.UI;
+using NPCs.Core;
 using NPCs.Dialogue.Models;
 using NPCs.Trading;
-using NPCs.Utilities.UI;
 using UnityEngine;
-using Animator = NPCs.Utilities.UI.Animator;
+using Animator = MLib.UI.Animator;
 
 namespace NPCs.Dialogue
 {
@@ -12,10 +12,14 @@ namespace NPCs.Dialogue
 	/// </summary>
 	internal class ConversationUI : MonoBehaviour
 	{
+		private const string AnimationKey = "ConversationUI";
+
 		private static ConversationRunner _activeRunner;
 		private static SpeechRenderer _activeSpeech;
 		private static bool _uiEnabled;
-		private Vector2 _scroll;
+		private static string _lastName;
+		private readonly ScrollState _scroll = new ScrollState();
+		private WindowOptions _windowOptions;
 
 		/// <summary>
 		/// Whether a conversation is currently active.
@@ -24,6 +28,14 @@ namespace NPCs.Dialogue
 		public static bool HasBackgroundConversation => _activeRunner != null && !_uiEnabled;
 
 		public static ConversationRunner ActiveRunner => _activeRunner;
+
+		private void Awake()
+		{
+			_windowOptions = WindowOptions.Static();
+			_windowOptions.AnimationKey = AnimationKey;
+			_windowOptions.SlideDirection = Animator.SlideDirection.Bottom;
+			Animator.SetVisible(AnimationKey, _uiEnabled, animate: false);
+		}
 
 		/// <summary>
 		/// Sets the active conversation runner, driving the UI.
@@ -48,12 +60,6 @@ namespace NPCs.Dialogue
 			SetUIState(false);
 		}
 
-		public static void Show()
-		{
-			if (!HasActiveConversation) return;
-			SetUIState(true);
-		}
-
 		public static void Hide()
 		{
 			SetUIState(false);
@@ -61,19 +67,14 @@ namespace NPCs.Dialogue
 
 		private static void SetUIState(bool state)
 		{
+			if (state)
+				_lastName = _activeRunner?.GetVariable("npcName") ?? "Stranger";
+
 			mainscript.M.crsrLocked = !state;
 			mainscript.M.SetCursorVisible(state);
 			mainscript.M.menu.gameObject.SetActive(!state);
-
-			if (_uiEnabled != state)
-			{
-				if (state)
-					Animator.Play("mainUI", Animator.AnimationState.SlideIn);
-				else
-					Animator.Play("mainUI", Animator.AnimationState.SlideOut);
-			}
-
 			_uiEnabled = state;
+			Animator.SetVisible(AnimationKey, _uiEnabled);
 		}
 
 		private void Update()
@@ -128,70 +129,54 @@ namespace NPCs.Dialogue
 
 		private void OnGUI()
 		{
-			Styling.Bootstrap();
-			GUI.skin = Styling.GetSkin();
-
 			float width = Screen.width * 0.7f;
 			float height = Screen.height * 0.3f;
 			float x = Screen.width / 2 - width / 2;
 			float y = Screen.height - height - 20f;
-			Rect targetRect = new Rect(x, y, width, height);
-			Rect animatedRect = Animator.Slide("mainUI", targetRect, Animator.SlideDirection.Bottom);
-			if ((!HasActiveConversation || HasBackgroundConversation) && Animator.IsIdle("mainUI")) return;
+			Rect rect = new Rect(x, y, width, height);
+			if (!_uiEnabled && Animator.IsHidden(AnimationKey)) return;
 
 			// Clicks are acted on once the layout is done, because they can end the conversation and clear the active runner mid-draw.
 			ConversationRunner runner = _activeRunner;
 			int selectedOption = -1;
 			bool advance = false;
 
-			GUILayout.BeginArea(animatedRect, GUIContent.none, "box");
-			GUILayout.BeginHorizontal("box");
-			GUILayout.Space(5f);
-			GUILayout.Label(runner?.GetVariable("npcName") ?? "Stranger", "LabelHeader", GUILayout.ExpandWidth(false));
-			GUILayout.EndHorizontal();
-			GUILayout.Space(10f);
-			ConversationNode node = runner?.CurrentNode;
-			bool hasOptions = node?.Options != null && node.Options.Count > 0;
-
-			_scroll = GUILayout.BeginScrollView(_scroll);
-			if (node != null)
+			using (Ui ui = Ui.StaticWindow(rect, "Conversation", _windowOptions))
 			{
-				// Fall back to showing the NPC's line here when the player can't see the speech box above their head.
-				if (_activeSpeech != null && !_activeSpeech.IsVisibleToPlayer && !string.IsNullOrEmpty(runner?.CurrentText))
-				{
-					GUILayout.Label(runner.ResolveText(runner.CurrentText), "LabelSubHeader");
-					GUILayout.Space(5f);
-				}
+				ui.Header(_lastName);
+				ui.Divider();
+				ui.Space(10);
 
-				if (hasOptions)
+				ConversationNode node = runner?.CurrentNode;
+				if (node == null) return;
+				bool hasOptions = node?.Options != null && node.Options.Count > 0;
+
+				using (Ui box = ui.Scroll(_scroll))
 				{
-					for (int i = 0; i < node.Options.Count; i++)
+					// Fall back to showing the NPC's line here when the player can't see the speech box above their head.
+					if (_activeSpeech != null && !_activeSpeech.IsVisibleToPlayer && !string.IsNullOrEmpty(runner?.CurrentText))
 					{
-						if (!runner.IsOptionAvailable(node.Options[i])) continue;
+						box.Label(runner.ResolveText(runner.CurrentText));
+						box.Space(5);
+					}
 
-						GUILayout.BeginHorizontal();
-						GUILayout.FlexibleSpace();
-						if (GUILayout.Button(runner.ResolveText(node.Options[i].Text), GUILayout.MaxWidth(width - 40f), GUILayout.MaxHeight(35f)))
-							selectedOption = i;
-						GUILayout.FlexibleSpace();
-						GUILayout.EndHorizontal();
+					if (hasOptions)
+					{
+						for (int i = 0; i < node.Options.Count; i++)
+						{
+							if (!runner.IsOptionAvailable(node.Options[i])) continue;
+
+							if (box.Button(runner.ResolveText(node.Options[i].Text)))
+								selectedOption = i;
+						}
+					}
+					else
+					{
+						if (box.Button("Continue..."))
+							advance = true;
 					}
 				}
-				else
-				{
-					GUILayout.BeginHorizontal();
-					GUILayout.FlexibleSpace();
-					if (GUILayout.Button("Continue...", GUILayout.MaxWidth(width - 40f), GUILayout.MaxHeight(35f)))
-						advance = true;
-					GUILayout.FlexibleSpace();
-					GUILayout.EndHorizontal();
-				}
 			}
-			GUILayout.EndScrollView();
-			GUILayout.EndArea();
-
-			// Reset back to default Unity skin to avoid styling bleeding to other UI mods.
-			GUI.skin = null;
 
 			if (selectedOption >= 0)
 				runner.SelectOption(selectedOption);

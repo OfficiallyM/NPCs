@@ -1,0 +1,4 @@
+[submodule "src/NPCs/MLib"]
+	path = src/NPCs/MLib
+	url = https://github.com/OfficiallyM/MLib.git
+	branch = master
